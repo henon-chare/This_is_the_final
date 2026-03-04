@@ -164,163 +164,6 @@ def read_root():
 
 # ================= DOMAIN TRACKING LOGIC & FIXES =================
 
-# --- HYBRID SSL FETCHING FUNCTION (Native + SSL Labs API) ---
-def _get_cert_via_ssl_module(domain_name):
-    """
-    Fetches SSL certificate.
-    1. Tries Native Connection (Fastest, Standard).
-    2. Falls back to SSL Labs API if Native fails.
-    """
-    
-    # --- HELPER: SSL Labs API Fallback ---
-    def get_from_ssl_labs(host):
-        try:
-            # Endpoint for host info
-            url = f"https://api.ssllabs.com/v1/info?host={host}"
-            headers = {'User-Agent': 'Mozilla/5.0 (CyberGuard/1.0)'}
-            response = requests.get(url, headers=headers, timeout=10)
-            
-            if response.status_code == 200:
-                data = response.json()
-                
-                # Normalize status
-                status = "Unknown"
-                if data.get("valid") is True:
-                    status = "Valid"
-                elif data.get("valid") is False:
-                    status = "Invalid"
-                
-                # Extract Issuer
-                issuer = "Unknown"
-                if "issuer_organization" in data and data["issuer_organization"]:
-                    issuer = data["issuer_organization"]
-                elif "issuer_name" in data:
-                    issuer = data["issuer_name"]
-                
-                # Extract Expiration (API returns ISO 8601)
-                expires = data.get("expires", "Unknown")
-                
-                return {
-                    "status": status,
-                    "issuer": issuer,
-                    "expires": expires
-                }
-        except Exception as e:
-            print(f"[SSL LABS ERROR] {e}")
-            return None
-
-    # --- MAIN SSL FETCH LOGIC ---
-    def _fetch_cert(target_ip_or_domain):
-        try:
-            # Clean domain (remove http:// etc)
-            target = target_ip_or_domain.replace("https://", "").replace("http://", "").split("/")[0]
-            
-            # Create a modern SSL Context
-            # PROTOCOL_TLS_CLIENT is best for modern browsers/servers
-            context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            
-            # Create a standard IPv4 Socket
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(15)  # Increased timeout for slow networks
-            
-            # 1. Connect to the server on port 443
-            sock.connect((target, 443))
-            
-            # 2. Wrap the socket with SSL
-            ssock = context.wrap_socket(sock, server_hostname=target)
-            
-            # 3. FORCE the handshake to complete
-            ssock.do_handshake()
-            
-            # 4. Get the certificate
-            cert = ssock.getpeercert()
-            
-            # Close connection
-            ssock.close()
-            
-            if not cert:
-                raise ValueError("No Cert Data")
-
-            # Extract Issuer
-            issuer = "Unknown"
-            try:
-                for item in cert.get('issuer', []):
-                    for sub_item in item:
-                        if sub_item[0] == 'organizationName':
-                            issuer = sub_item[1]
-                            break
-                    if issuer != "Unknown": break
-            except:
-                pass 
-
-            if issuer == "Unknown":
-                try:
-                    for item in cert.get('issuer', []):
-                        for sub_item in item:
-                            if sub_item[0] == 'commonName':
-                                issuer = sub_item[1]
-                                break
-                        if issuer != "Unknown": break
-                except:
-                    pass
-
-            not_after = cert.get('notAfter')
-            
-            # --- ROBUST DATE PARSING ---
-            status = "Unknown"
-            formatted_expiry = "Unknown"
-            
-            if not_after:
-                # List of common SSL date formats
-                date_formats = [
-                    "%b %d %H:%M:%S %Y %Z", # Jan 01 12:00:00 2024 GMT
-                    "%b %d %H:%M:%S %Y",    # Jan 01 12:00:00 2024 (some certs omit Z)
-                    "%Y-%m-%dT%H:%M:%SZ",    # 2024-01-01T12:00:00Z (ISO 8601)
-                    "%Y-%m-%dT%H:%M:%S.%fZ", # 2024-01-01T12:00:00.000Z
-                    "%Y-%m-%d"                # 2024-01-01
-                ]
-                
-                parsed_date = None
-                for fmt in date_formats:
-                    try:
-                        parsed_date = datetime.strptime(not_after.strip(), fmt)
-                        break # Stop if we successfully parse
-                    except ValueError:
-                        continue
-                
-                if parsed_date:
-                    if parsed_date < datetime.utcnow():
-                        status = "Expired"
-                    else:
-                        status = "Valid"
-                    # Return ISO format string to frontend to be safe and standard
-                    formatted_expiry = parsed_date.strftime("%Y-%m-%dT%H:%M:%SZ") 
-                else:
-                    status = "Invalid Date"
-                    formatted_expiry = not_after # Pass raw string if we can't parse
-            else:
-                status = "No Expiry"
-
-            return {
-                "status": status,
-                "issuer": issuer,
-                "expires": formatted_expiry
-            }
-            
-        except Exception as e:
-            # FALLBACK TO SSL LABS API IF NATIVE FAILS
-            print(f"[NATIVE SSL FAILED FOR {target_ip_or_domain}, trying SSL Labs API...")
-            api_result = get_from_ssl_labs(target_ip_or_domain)
-            
-            if api_result:
-                return api_result
-            else:
-                return {"status": "Error", "issuer": "Unknown", "expires": "Unknown"}
-
-    return _fetch_cert(domain_name)
-
 # --- RDAP / WHOIS HELPER ---
 def _get_rdap_info_ultra(domain_name):
     try:
@@ -369,14 +212,13 @@ def get_dns_records(domain):
 
 # --- SCAN LOGIC (Background Task) ---
 def run_domain_scan_logic(domain_name):
-    """Runs the blocking scan operations."""
+    """Runs the blocking scan operations. REMOVED SSL FETCHING."""
     print(f"[SCAN START] Scanning {domain_name}...")
     
     # 1. Get DNS
     dns_data = get_dns_records(domain_name)
     
-    # 2. Get SSL (Using the Hybrid Function)
-    ssl_data = _get_cert_via_ssl_module(domain_name)
+    # 2. REMOVED: SSL Fetching
     
     # 3. Get WHOIS (Using the RDAP function)
     whois_data, _ = _get_rdap_info_ultra(domain_name)
@@ -384,7 +226,7 @@ def run_domain_scan_logic(domain_name):
     # 4. Prepare Database Payloads
     return {
         "dns": json.dumps(dns_data),
-        "ssl": json.dumps(ssl_data),
+        "ssl": json.dumps({}), # Empty SSL object
         "whois": json.dumps(whois_data)
     }
 
@@ -462,7 +304,7 @@ def check_domain_expiry_alerts(domain: Domain, days_remaining: int, db: Session)
 # --- 1. LIST DOMAINS ---
 @app.get("/domain/list")
 def list_domains(current_user: User = Depends(auth.get_current_user), db: Session = Depends(get_db)):
-    """Returns list of domains for the logged-in user."""
+    """Returns list of domains for the logged-in user. REMOVED SSL STATUS."""
     domains = db.query(Domain).filter(Domain.user_id == current_user.id).all()
     
     # Format for frontend
@@ -472,8 +314,8 @@ def list_domains(current_user: User = Depends(auth.get_current_user), db: Sessio
             "id": d.id,
             "domain_name": d.domain_name,
             "security_score": d.security_score,
-            "last_scanned": d.last_scanned.isoformat() if d.last_scanned else None,
-            "ssl_status": json.loads(d.ssl_data).get("status") if d.ssl_data else "Unknown"
+            "last_scanned": d.last_scanned.isoformat() if d.last_scanned else None
+            # REMOVED: "ssl_status"
         })
     return response
 
@@ -487,7 +329,6 @@ async def add_domain(
     """
     Adds a new domain and performs an immediate scan.
     Accepts raw string body (e.g., "google.com") to match frontend.
-    Uses Hybrid SSL Fetcher (Native + SSL Labs API).
     """
     # Read raw body to get simple string domain
     body = await request.body()
@@ -510,7 +351,7 @@ async def add_domain(
         domain_name=clean_domain,
         user_id=current_user.id,
         security_score=0,
-        ssl_data="{}",
+        ssl_data="{}", # Empty SSL
         whois_data="{}",
         dns_data="{}",
         manual_data="{}"
@@ -526,13 +367,14 @@ async def add_domain(
         
         # Update DB with results
         new_domain.dns_data = scan_results["dns"]
-        new_domain.ssl_data = scan_results["ssl"]
+        new_domain.ssl_data = "{}" # Explicitly empty
         new_domain.whois_data = scan_results["whois"]
         new_domain.last_scanned = datetime.utcnow()
         
-        # Calculate a rough score based on status
-        ssl_info = json.loads(scan_results["ssl"])
-        new_domain.security_score = 100 if ssl_info.get("status") == "Valid" else 50
+        # Calculate a rough score based on domain age/status (No SSL)
+        whois_info = json.loads(scan_results["whois"])
+        # Simple score: 100 if domain exists and has data, 50 otherwise
+        new_domain.security_score = 100 if whois_info.get("registrar") else 50
         
         db.commit()
     except Exception as e:
@@ -562,9 +404,6 @@ def get_domain_detail(id: int, current_user: User = Depends(auth.get_current_use
         "id": d.id,
         "domain_name": d.domain_name,
         "last_scanned": d.last_scanned.isoformat() if d.last_scanned else None,
-        "ssl_status": ssl_data.get("status"),
-        "ssl_issuer": ssl_data.get("issuer"),
-        "ssl_expires": ssl_data.get("expires"),
         "creation_date": whois_data.get("created"),
         "expiration_date": whois_data.get("expires"),
         "registrar": whois_data.get("registrar"),
@@ -585,13 +424,13 @@ async def rescan_domain(id: int, current_user: User = Depends(auth.get_current_u
         scan_results = await loop.run_in_executor(None, run_domain_scan_logic, d.domain_name)
         
         d.dns_data = scan_results["dns"]
-        d.ssl_data = scan_results["ssl"]
+        d.ssl_data = "{}" # Empty SSL
         d.whois_data = scan_results["whois"]
         d.last_scanned = datetime.utcnow()
         
         # Update score
-        ssl_info = json.loads(scan_results["ssl"])
-        d.security_score = 100 if ssl_info.get("status") == "Valid" else 50
+        whois_info = json.loads(scan_results["whois"])
+        d.security_score = 100 if whois_info.get("registrar") else 50
         
         db.commit()
         return {"message": "Scan successful"}
@@ -894,8 +733,7 @@ async def download_global_monitoring_report(data: GlobalReportRequest, current_u
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-# ================= SINGLE DOMAIN REPORT GENERATION =================
-# ================= SINGLE DOMAIN REPORT GENERATION (UPDATED) =================
+# ================= SINGLE DOMAIN REPORT GENERATION (UPDATED - NO SSL) =================
 
 def formatDate(date_str):
     if not date_str: return "N/A"
@@ -966,18 +804,18 @@ def get_field_value(field_name, manual_data, whois_data, dns_data):
     return manual_data.get(field_name, "Not Set")
 
 def generate_single_domain_pdf(domain_id: int, db: Session, password: str):
-    """Generates a detailed PDF for a single specific domain."""
+    """Generates a detailed PDF for a single specific domain. SSL REMOVED."""
     d = db.query(Domain).filter(Domain.id == domain_id).first()
     if not d: raise HTTPException(status_code=404, detail="Domain not found")
 
     # Robust JSON parsing
     try:
-        ssl_data = json.loads(d.ssl_data) if d.ssl_data else {}
+        # SSL data ignored
         whois_data = json.loads(d.whois_data) if d.whois_data else {}
         manual_data = json.loads(d.manual_data) if d.manual_data else {}
         dns_data = json.loads(d.dns_data) if d.dns_data else {}
     except (json.JSONDecodeError, TypeError):
-        ssl_data = {}; whois_data = {}; manual_data = {}; dns_data = {}
+        whois_data = {}; manual_data = {}; dns_data = {}
 
     buffer = BytesIO()
     encryption = StandardEncryption(userPassword=password, ownerPassword="CyberGuardAdminOwnerPass", canPrint=1)
@@ -999,9 +837,21 @@ def generate_single_domain_pdf(domain_id: int, db: Session, password: str):
     elements.append(Paragraph("CyberGuard", title_style))
     elements.append(Paragraph(f"<b>Domain Intelligence Report</b>", subtitle_style))
     
-    status_color = STATUS_GREEN if ssl_data.get("status") == "Valid" else STATUS_RED
-    status_txt = ssl_data.get("status", "Unknown").upper()
-    
+    # Calculate Domain Age for Header
+    age_str = "Unknown"
+    created_str = whois_data.get("created") or manual_data.get("regDate")
+    if created_str:
+        try:
+            created_dt = datetime.strptime(created_str.split('T')[0], "%Y-%m-%d")
+            age_days = (datetime.utcnow() - created_dt).days
+            years = age_days // 365
+            days = age_days % 365
+            age_str = f"{years}y {days}d"
+        except: pass
+
+    status_color = STATUS_GREEN
+    status_txt = "ACTIVE"
+
     exp_date_str = whois_data.get("expires") or manual_data.get("expirationDate")
     risk_txt = "Low"
     if exp_date_str:
@@ -1028,12 +878,15 @@ def generate_single_domain_pdf(domain_id: int, db: Session, password: str):
     elements.append(dh_table)
     elements.append(Spacer(1, 20))
 
-    # --- USING SMART HELPER FOR ACCURATE DATA ---
+    # --- VITAL DATA (REPLACED SSL WITH AGE/TLD) ---
+    # Extract TLD
+    tld = d.domain_name.split('.')[-1].upper() if '.' in d.domain_name else "UNKNOWN"
+    
     vital_data = [
-        [Paragraph("Registrar", label_style), Paragraph(get_field_value("Registrar", manual_data, whois_data, dns_data), body_style)],
+        [Paragraph("Domain Age", label_style), Paragraph(age_str, body_style)],
+        [Paragraph("TLD", label_style), Paragraph(tld, body_style)],
         [Paragraph("Risk Level", label_style), Paragraph(f"<font color='{status_color.hexval() if hasattr(status_color, 'hexval') else '#000'}'><b>{risk_txt}</b></font>", body_style)],
-        [Paragraph("Expiration", label_style), Paragraph(formatDate(exp_date_str) if exp_date_str else "Unknown", body_style)],
-        [Paragraph("SSL Issuer", label_style), Paragraph(ssl_data.get("issuer", "Unknown"), body_style)]
+        [Paragraph("Expiration", label_style), Paragraph(formatDate(exp_date_str) if exp_date_str else "Unknown", body_style)]
     ]
     vital_table = Table(vital_data, colWidths=[1.8*inch, 4*inch])
     vital_table.setStyle(TableStyle([
@@ -1049,7 +902,7 @@ def generate_single_domain_pdf(domain_id: int, db: Session, password: str):
 
     elements.append(Paragraph("Ownership & Infrastructure", section_title_style))
     
-    # --- UPDATED OWNER DATA SECTION ---
+    # --- OWNER DATA SECTION ---
     owner_data = [
         [Paragraph("Primary Owner", label_style), Paragraph(manual_data.get("primaryOwner", "Not Set"), body_style)],
         [Paragraph("Department", label_style), Paragraph(manual_data.get("department", "Not Set"), body_style)],
@@ -1174,6 +1027,10 @@ def generate_global_domain_report(user_id: int, db: Session, password: str):
                 ssl_data = {}; whois_data = {}; manual = {}; dns_data = {}
 
             if ssl_data.get("status") == "Valid": valid_ssl += 1
+            
+       
+            
+            # ... rest of the loop logic would continue here
             
             exp_date_str = whois_data.get("expires") or manual.get("expirationDate")
             if exp_date_str:

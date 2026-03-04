@@ -32,23 +32,15 @@ const validateReportPassword = (password, username) => {
   return { valid: true, msg: "" };
 };
 
-// ================= RISK SCORING ALGORITHM =================
-const calculateRisk = (manualData, sslStatus) => {
+// ================= RISK SCORING ALGORITHM (UPDATED - NO SSL) =================
+const calculateRisk = (manualData) => {
   let score = 0;
   let riskLevel = "Low";
   let color = "var(--status-green)";
 
   const expDate = new Date(manualData.expirationDate || manualData.apiExpiration);
   const now = new Date();
-  
-  // FIX: Robust Date Parsing to prevent NaN
-  let daysLeft = 0;
-  if (expDate && !isNaN(expDate.getTime())) {
-      daysLeft = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
-  } else {
-      // Default to high risk if date is missing/invalid
-      daysLeft = 0; 
-  }
+  const daysLeft = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
 
   if (daysLeft < 0) {
     score += 80;
@@ -66,9 +58,7 @@ const calculateRisk = (manualData, sslStatus) => {
     score += 10;
   }
 
-  if (sslStatus !== "Valid") {
-    score += 20;
-  }
+  // REMOVED SSL CHECK
 
   if (manualData.security.mfa) score -= 10;
   if (manualData.security.lock) score -= 10;
@@ -163,7 +153,6 @@ const PasswordModal = ({ isOpen, onClose, onSubmit, title, username }) => {
 
 // ================= LANDING PAGE COMPONENT =================
 const LandingPage = ({ onLogin, onRegister }) => {
-  
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
     if (element) {
@@ -247,7 +236,7 @@ const LandingPage = ({ onLogin, onRegister }) => {
             <div className="card-icon">📡</div>
             <h3>Auto-Tracking</h3>
             <p>
-              Instant updates on domain status, DNS propagation, SSL certs, and WHOIS changes via RDAP.
+              Instant updates on domain status, DNS propagation, and WHOIS changes via RDAP.
             </p>
           </div>
           <div className="feature-card">
@@ -269,21 +258,21 @@ const LandingPage = ({ onLogin, onRegister }) => {
             <div className="card-icon">⚡</div>
             <h3>Real-Time Monitoring</h3>
             <p>
-              Live HTTP/S uptime tracking with adaptive anomaly detection to catch performance bottlenecks before they cause outages.
+              Live HTTP/S uptime tracking with adaptive anomaly detection to catch performance bottlenecks.
             </p>
           </div>
           <div className="feature-card">
             <div className="card-icon">🔒</div>
-            <h3>Password Protected Report</h3>
+            <h3>Secure Reports</h3>
             <p>
-              Generate secure, password-protected PDF audit trails and executive summaries for compliance and stakeholders.
+              Generate password-protected PDF audit trails and executive summaries for compliance.
             </p>
           </div>
           <div className="feature-card">
             <div className="card-icon">🚨</div>
             <h3>Incident Response</h3>
             <p>
-              Detailed incident logging with root cause analysis, downtime duration tracking, and automated alerting workflows.
+              Detailed incident logging with root cause analysis and automated alerting workflows.
             </p>
           </div>
         </div>
@@ -299,57 +288,33 @@ const LandingPage = ({ onLogin, onRegister }) => {
             <div className="avatar">HC</div>
             <div className="dev-name">Henon Chare</div>
             <div className="dev-role">Lead Developer</div>
-            <a href="mailto:henonchare21@gmail.com" className="contact-link email-link">
-              📧 henonchare21@gmail.com
-            </a>
-            <a href="tel:+251982049520" className="contact-link phone-link">
-              📞 +251 98 204 9520
-            </a>
-            <a href="https://github.com/henon-chare" target="_blank" rel="noopener noreferrer" className="contact-link github-link">
-              💻 henon-chare
-            </a>
+            <a href="mailto:henonchare21@gmail.com" className="contact-link email-link">📧 henonchare21@gmail.com</a>
+            <a href="tel:+251982049520" className="contact-link phone-link">📞 +251 98 204 9520</a>
+            <a href="https://github.com/henon-chare" target="_blank" rel="noopener noreferrer" className="contact-link github-link">💻 henon-chare</a>
           </div>
           <div className="team-card">
             <div className="avatar">BT</div>
             <div className="dev-name">Biniyam Temesgen</div>
             <div className="dev-role">Backend Engineer</div>
-            <a href="mailto:biniyamtemesgen40@gmail.com" className="contact-link email-link">
-              📧 biniyamtemesgen40@gmail.com
-            </a>
-            <a href="tel:+251985957185" className="contact-link phone-link">
-              📞 +251 98 595 7185
-            </a>
-            <a href="https://github.com/Bi-ni-yam" target="_blank" rel="noopener noreferrer" className="contact-link github-link">
-              💻 Bi-ni-yam
-            </a>
+            <a href="mailto:biniyamtemesgen40@gmail.com" className="contact-link email-link">📧 biniyamtemesgen40@gmail.com</a>
+            <a href="tel:+251985957185" className="contact-link phone-link">📞 +251 98 595 7185</a>
+            <a href="https://github.com/Bi-ni-yam" target="_blank" rel="noopener noreferrer" className="contact-link github-link">💻 Bi-ni-yam</a>
           </div>
           <div className="team-card">
             <div className="avatar">MK</div>
             <div className="dev-name">Mikiyas Kindie</div>
             <div className="dev-role">Frontend Specialist</div>
-            <a href="mailto:mikiyaskindie6@gmail.com" className="contact-link email-link">
-              📧 mikiyaskindie6@gmail.com
-            </a>
-            <a href="tel:+251948010770" className="contact-link phone-link">
-              📞 +251 94 801 0770
-            </a>
-            <a href="https://github.com/mikii122129" target="_blank" rel="noopener noreferrer" className="contact-link github-link">
-              💻 mikii122129
-            </a>
+            <a href="mailto:mikiyaskindie6@gmail.com" className="contact-link email-link">📧 mikiyaskindie6@gmail.com</a>
+            <a href="tel:+251948010770" className="contact-link phone-link">📞 +251 94 801 0770</a>
+            <a href="https://github.com/mikii122129" target="_blank" rel="noopener noreferrer" className="contact-link github-link">💻 mikii122129</a>
           </div>
           <div className="team-card">
             <div className="avatar">AM</div>
             <div className="dev-name">Abinet Melkamu</div>
             <div className="dev-role">System Architect</div>
-            <a href="mailto:instaman2124@gmail.com" className="contact-link email-link">
-              📧 instaman2124@gmail.com
-            </a>
-            <a href="tel:+251923248825" className="contact-link phone-link">
-              📞 +251 92 324 8825
-            </a>
-            <a href="https://github.com/abinetbdu" target="_blank" rel="noopener noreferrer" className="contact-link github-link">
-              💻 abinetbdu
-            </a>
+            <a href="mailto:instaman2124@gmail.com" className="contact-link email-link">📧 instaman2124@gmail.com</a>
+            <a href="tel:+251923248825" className="contact-link phone-link">📞 +251 92 324 8825</a>
+            <a href="https://github.com/abinetbdu" target="_blank" rel="noopener noreferrer" className="contact-link github-link">💻 abinetbdu</a>
           </div>
         </div>
       </section>
@@ -458,10 +423,6 @@ const ExpiryCountdown = ({ label, dateStr }) => {
   if (!dateStr) return <div className="expiry-badge">N/A</div>;
 
   const targetDate = new Date(dateStr);
-  
-  // FIX: Robust check to prevent NaN if date is invalid
-  if (isNaN(targetDate.getTime())) return <div className="expiry-badge">Invalid Date</div>;
-
   const now = new Date();
   const diffTime = targetDate - now;
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -523,7 +484,6 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
 
   const [domainManualDataMap, setDomainManualDataMap] = useState({});
 
-  // DERIVED STATE
   const currentManualData = useMemo(() => {
     if (!selectedDomain) return DEFAULT_MANUAL_DATA;
     return domainManualDataMap[selectedDomain.domain_name] || DEFAULT_MANUAL_DATA;
@@ -535,13 +495,13 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) {
-          if (res.status === 401) {
+        if (res.status === 401) {
             alert("Session expired. Please login again.");
             window.location.reload();
-          }
-          setDomains([]);
-          setLoading(false);
-          return;
+        }
+        setDomains([]);
+        setLoading(false);
+        return;
       }
       const data = await res.json();
       setDomains(Array.isArray(data) ? data : []);
@@ -736,7 +696,6 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
 
   const updateSecurityField = (key, value) => {
     if (!selectedDomain) return;
-    
     const domainName = selectedDomain.domain_name;
     const prevData = domainManualDataMap[domainName] || DEFAULT_MANUAL_DATA;
     
@@ -760,7 +719,6 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
 
   const saveManualData = async (isSilent = false, manualPayload = null) => {
     if (!selectedDomain) return;
-    
     const payload = manualPayload || domainManualDataMap[selectedDomain.domain_name];
     
     try {
@@ -816,15 +774,28 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
     }
   };
 
-  const riskScoreObj = detailData ? calculateRisk(currentManualData, detailData.ssl_status) : { score: 0, riskLevel: "Unknown", color: "gray" };
+  const riskScoreObj = detailData ? calculateRisk(currentManualData) : { score: 0, riskLevel: "Unknown", color: "gray" };
+  
+  // Helper: Calculate Domain Age
+  const getDomainAge = (dateStr) => {
+      if (!dateStr) return "Unknown";
+      try {
+          const created = new Date(dateStr);
+          const now = new Date();
+          const diff = now - created;
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const years = Math.floor(days / 365);
+          const remainingDays = days % 365;
+          if (years > 0) return `${years}y ${remainingDays}d`;
+          return `${days}d`;
+      } catch(e) { return "Invalid"; }
+  };
 
-  // Helper to get status color for SSL text
-  const getSslStatusColor = (status) => {
-      if (!status) return "var(--text-muted)";
-      const s = status.toLowerCase();
-      if (s === 'valid') return 'var(--status-green)';
-      if (s.includes('error') || s.includes('timeout') || s === 'expired') return 'var(--status-red)';
-      return 'var(--status-orange)';
+  // Helper: Extract TLD
+  const getTLD = (domain) => {
+      if (!domain) return "??";
+      const parts = domain.split('.');
+      return parts.length > 1 ? parts[parts.length - 1].toUpperCase() : "??";
   };
 
   return (
@@ -960,6 +931,7 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
 
             {isScanning && <div className="scan-overlay"><div className="scan-line"></div></div>}
 
+            {/* TABS */}
             <div style={{ display: "flex", gap: "20px", marginBottom: "20px", borderBottom: "1px solid var(--border-color)" }}>
                 {['overview', 'asset', 'security'].map(tab => (
                     <div 
@@ -981,10 +953,12 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
                 ))}
             </div>
 
+            {/* TAB CONTENT */}
             {activeDetailTab === "overview" && (
                 <div className="fade-in-content">
                     <div className="analytics-grid">
                         
+                        {/* 1. Ownership Card (Manual) */}
                         {(currentManualData.primaryOwner || currentManualData.department) && (
                             <div className="analytics-card glass-card-hover" style={{borderTop: "3px solid var(--status-blue)"}}>
                                 <div className="card-header">
@@ -1011,30 +985,34 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
                             </div>
                         )}
 
+                        {/* 2. NEW: Domain Vitality Card (Replaces SSL) */}
                         <div className="analytics-card glass-card-hover">
                             <div className="card-header">
-                                <span className="card-icon">🔒</span>
-                                <h4>SSL Certificate (Auto)</h4>
+                                <span className="card-icon">📅</span>
+                                <h4>Domain Vitality</h4>
                             </div>
                             <div className="card-body">
                                 <div className="status-row">
-                                    <span>Status:</span>
-                                    <span style={{ color: getSslStatusColor(detailData.ssl_status), fontWeight: 'bold' }}>
-                                        {detailData.ssl_status || "Unknown"}
-                                    </span>
+                                    <span>Age:</span>
+                                    <span style={{fontWeight:"bold", color:"var(--status-blue)"}}>{getDomainAge(currentManualData.regDate || detailData.creation_date)}</span>
                                 </div>
                                 <div className="status-row">
-                                    <span>Issuer:</span>
+                                    <span>TLD:</span>
+                                    <span style={{fontWeight:"bold", color:"var(--status-green)"}}>{getTLD(detailData.domain_name)}</span>
+                                </div>
+                                <div className="status-row">
+                                    <span>Registrar:</span>
                                     <span className="text-glow">
-                                        {detailData.ssl_issuer || "Unknown"}
+                                        {currentManualData.registrar || detailData.registrar || "Unknown"}
                                     </span>
                                 </div>
                                 <div style={{marginTop: "15px"}}>
-                                    <ExpiryCountdown label="Expires In" dateStr={detailData.ssl_expires} />
+                                    <ExpiryCountdown label="Renewal In" dateStr={currentManualData.expirationDate || detailData.expiration_date} />
                                 </div>
                             </div>
                         </div>
 
+                         {/* 3. Infrastructure Providers (Manual) */}
                          {(currentManualData.hostingProvider || currentManualData.dnsProvider) && (
                             <div className="analytics-card glass-card-hover" style={{borderTop: "3px solid var(--status-blue)"}}>
                                 <div className="card-header">
@@ -1050,10 +1028,6 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
                                         <span>Hosting:</span>
                                         <span style={{fontWeight:"bold"}}>{currentManualData.hostingProvider || "---"}</span>
                                     </div>
-                                    <div className="status-row">
-                                        <span>SSL:</span>
-                                        <span>{currentManualData.sslProvider || "---"}</span>
-                                    </div>
                                     <div style={{marginTop: "10px", fontSize: "0.7rem", color: "var(--text-muted)"}}>
                                         * Edit in Asset Profile tab
                                     </div>
@@ -1061,26 +1035,13 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
                             </div>
                         )}
 
+                        {/* 4. Lifecycle & Purpose (Manual) */}
                         <div className="analytics-card glass-card-hover">
                             <div className="card-header">
-                                <span className="card-icon">📅</span>
-                                <h4>Domain Lifecycle</h4>
+                                <span className="card-icon">⚙️</span>
+                                <h4>Purpose & Lifecycle</h4>
                             </div>
                             <div className="card-body">
-                                <div className="status-row">
-                                    <span>Expires:</span>
-                                    <span style={{
-                                        color: currentManualData.expirationDate ? "var(--status-blue)" : "var(--text-muted)",
-                                        fontWeight: currentManualData.expirationDate ? "bold" : "normal"
-                                    }}>
-                                        {currentManualData.expirationDate ? formatDate(currentManualData.expirationDate) : (detailData.expiration_date ? formatDate(detailData.expiration_date) : "Unknown")}
-                                    </span>
-                                </div>
-                                {currentManualData.expirationDate && (
-                                    <div style={{fontSize: "0.7rem", color: "var(--status-orange)", marginBottom: "5px"}}>
-                                        Manual Override Set
-                                    </div>
-                                )}
                                 <div className="status-row">
                                     <span>Purpose:</span>
                                     <span style={{
@@ -1094,12 +1055,16 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
                                         {currentManualData.purpose}
                                     </span>
                                 </div>
-                                <div style={{marginTop: "15px"}}>
-                                    <ExpiryCountdown label="Renewal In" dateStr={currentManualData.expirationDate || detailData.expiration_date} />
+                                <div className="status-row">
+                                    <span>Auto-Renew:</span>
+                                    <span style={{color: currentManualData.autoRenew ? "var(--status-green)" : "var(--status-red)"}}>
+                                        {currentManualData.autoRenew ? "Enabled" : "Disabled"}
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
+                        {/* 5. Quick Health (DNS Only) */}
                         <div className="analytics-card glass-card-hover">
                              <div className="card-header">
                                 <span className="card-icon">🩺</span>
@@ -1107,12 +1072,12 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
                             </div>
                             <div className="card-body" style={{flexDirection: "column", gap: "12px"}}>
                                 <div className="health-item interactive-item">
-                                    <span className="health-icon">{detailData.ssl_status === 'Valid' ? '✅' : '⛔'}</span>
-                                    <div className="health-text"><strong>SSL Valid</strong></div>
-                                </div>
-                                <div className="health-item interactive-item">
                                     <span className="health-icon">{detailData.dns_records?.A?.length ? '✅' : '⚠️'}</span>
                                     <div className="health-text"><strong>DNS Resolution</strong></div>
+                                </div>
+                                <div className="health-item interactive-item">
+                                    <span className="health-icon">{detailData.registrar ? '✅' : '⚠️'}</span>
+                                    <div className="health-text"><strong>WHOIS Data</strong></div>
                                 </div>
                             </div>
                         </div>
@@ -1158,6 +1123,7 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
                         </div>
 
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
+                            {/* Ownership */}
                             <div className="form-section">
                                 <h5 style={{ color: "var(--status-blue)", marginBottom: "10px", textTransform: "uppercase", fontSize: "0.8rem" }}>Ownership & Team</h5>
                                 <div className="status-row">
@@ -1192,6 +1158,7 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
                                 </div>
                             </div>
 
+                            {/* Infrastructure */}
                             <div className="form-section">
                                 <h5 style={{ color: "var(--status-blue)", marginBottom: "10px", textTransform: "uppercase", fontSize: "0.8rem" }}>Infrastructure Providers</h5>
                                 <div className="status-row">
@@ -1215,17 +1182,18 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
                                     />
                                 </div>
                                 <div className="status-row">
-                                    <label>SSL Provider</label>
+                                    <label>Registrar</label>
                                     <input 
                                         type="text" 
-                                        value={currentManualData.sslProvider} 
-                                        onChange={(e) => updateManualField('sslProvider', e.target.value)}
+                                        value={currentManualData.registrar} 
+                                        onChange={(e) => updateManualField('registrar', e.target.value)}
                                         disabled={!isEditMode}
                                         style={!isEditMode ? { background: "transparent", border: "none", color: "white", textAlign: "right", width: "60%" } : {}}
                                     />
                                 </div>
                             </div>
 
+                             {/* Dates & Purpose */}
                              <div className="form-section">
                                 <h5 style={{ color: "var(--status-blue)", marginBottom: "10px", textTransform: "uppercase", fontSize: "0.8rem" }}>Lifecycle & Purpose</h5>
                                 <div className="status-row">
@@ -1275,6 +1243,7 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
             {activeDetailTab === "security" && (
                 <div className="fade-in-content">
                     <div className="analytics-grid">
+                        {/* Risk Score */}
                         <div className="analytics-card glass-card-hover" style={{ gridRow: "span 2" }}>
                              <div className="card-header">
                                 <span className="card-icon">📊</span>
@@ -1304,6 +1273,7 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
                             </div>
                         </div>
 
+                        {/* Security Checklist */}
                         <div className="analytics-card glass-card-hover">
                              <div className="card-header">
                                 <span className="card-icon">🔐</span>
@@ -1329,7 +1299,8 @@ const DomainTrackingComponent = ({ onBack, token, username }) => {
                             </div>
                         </div>
 
-                         <div className="analytics-card glass-card-hover">
+                         {/* Audit / Notes */}
+                        <div className="analytics-card glass-card-hover">
                              <div className="card-header">
                                 <span className="card-icon">📝</span>
                                 <h4>Audit & Workflow Log</h4>
@@ -2053,516 +2024,6 @@ const MonitoringComponent = ({ onBack, token, username }) => {
   );
 };
 
-// ================= ALERT DASHBOARD COMPONENT (UPDATED) =================
-const AlertDashboardComponent = ({ onBack, token }) => {
-  const [rules, setRules] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [filterSeverity, setFilterSeverity] = useState("all");
-
-  // NEW: Domains list for customization
-  const [domains, setDomains] = useState([]);
-
-  // New Rule Form State
-  const [newRule, setNewRule] = useState({
-    name: "",
-    type: "service",
-    target_id: null, // Track specific domain ID
-    condition: "status_down",
-    threshold: "",
-    severity: "warning",
-    channel: "email"
-  });
-
-  // Fetch Data
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [rulesRes, histRes] = await Promise.all([
-        fetch("http://localhost:8000/alerts/rules", {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch("http://localhost:8000/alerts/history?limit=50", {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      ]);
-
-      if (rulesRes.ok) setRules(await rulesRes.json());
-      if (histRes.ok) setHistory(await histRes.json());
-    } catch (e) {
-      console.error("Failed to load alerts", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // NEW: Fetch Domains when opening modal or component mounts if needed
-  const fetchDomains = async () => {
-    try {
-      const res = await fetch("http://localhost:8000/domain/list", {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        setDomains(await res.json());
-      }
-    } catch (e) {
-      console.error("Failed to load domains", e);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [token]);
-
-  // Fetch domains when modal opens to populate dropdown
-  useEffect(() => {
-    if (showAddModal) {
-      fetchDomains();
-    }
-  }, [showAddModal, token]);
-
-  const handleCreateRule = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch("http://localhost:8000/alerts/rules", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json", 
-          'Authorization': `Bearer ${token}` 
-        },
-        body: JSON.stringify(newRule)
-      });
-      
-      if (res.ok) {
-        setShowAddModal(false);
-        fetchData();
-        // Reset form
-        setNewRule({
-          name: "",
-          type: "service",
-          target_id: null,
-          condition: "status_down",
-          threshold: "",
-          severity: "warning",
-          channel: "email"
-        });
-      } else {
-        alert("Failed to create alert rule.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error creating rule.");
-    }
-  };
-
-  const handleDeleteRule = async (id) => {
-    if (!window.confirm("Delete this alert rule?")) return;
-    try {
-      const res = await fetch(`http://localhost:8000/alerts/rules/${id}`, {
-        method: "DELETE",
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (res.ok) {
-        fetchData(); 
-      } else {
-        const errorData = await res.json().catch(() => ({}));
-        alert(`Failed to delete: ${errorData.detail || res.statusText}`);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Network error while deleting rule.");
-    }
-  };
-
-  const getSeverityColor = (sev) => {
-    if (sev === "critical") return "var(--status-red)";
-    if (sev === "high") return "var(--status-orange)";
-    if (sev === "warning") return "#fbbf24"; 
-    return "var(--status-blue)";
-  };
-
-  const getSeverityBadge = (sev) => {
-      const color = getSeverityColor(sev);
-      return (
-        <span style={{
-            background: `${color}20`,
-            color: color,
-            border: `1px solid ${color}`,
-            padding: "2px 8px",
-            borderRadius: "4px",
-            fontSize: "0.7rem",
-            textTransform: "uppercase",
-            fontWeight: "bold"
-        }}>
-            {sev}
-        </span>
-      )
-  };
-
-  const filteredHistory = history.filter(h => 
-    filterSeverity === "all" ? true : h.severity === filterSeverity
-  );
-
-  // NEW: Determine Overall System Alert Level (High Level Feature)
-  const getSystemAlertLevel = () => {
-      const severities = history.map(h => h.severity);
-      if (severities.includes('critical')) return { text: "CRITICAL ALERT", color: "var(--status-red)" };
-      if (severities.includes('high')) return { text: "HIGH ALERT", color: "var(--status-orange)" };
-      if (severities.includes('warning')) return { text: "Warning Active", color: "#fbbf24" };
-      if (severities.includes('info')) return { text: "System Normal", color: "var(--status-blue)" };
-      return { text: "System Normal", color: "var(--status-blue)" };
-  };
-
-  const systemStatus = getSystemAlertLevel();
-
-  if (loading) return <div style={{padding: "20px", color: "var(--text-muted)"}}>Loading Alert Command Center...</div>;
-
-  return (
-    <div className="up-dashboard dashboard-atmosphere" style={{ display: 'block', height: 'auto', overflow: 'visible' }}>
-      <div className="glow-orb orb-dashboard-1"></div>
-      <div className="glow-orb orb-dashboard-2"></div>
-
-      <header className="dashboard-header" style={{ position: 'relative', top: 0, padding: '20px 40px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ color: 'var(--status-red)', textShadow: '0 0 10px rgba(239, 68, 68, 0.5)', margin: 0 }}>Alert Dashboard</h1>
-          <div style={{ fontSize: '0.8rem', color: systemStatus.color, fontWeight: 'bold', marginTop: '5px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            {systemStatus.text}
-          </div>
-        </div>
-        <button onClick={onBack} className="up-btn-gray" style={{ fontSize: '0.8rem' }}>← Back to Home</button>
-      </header>
-
-      <main style={{ padding: '0 40px 40px', maxWidth: '1600px', margin: '0 auto' }}>
-        
-        {/* UPDATED: Top Stats Row with Info and High Cards */}
-        <div className="analytics-grid" style={{ marginBottom: '30px' }}>
-            {/* Info Card - Interactive */}
-            <div className="analytics-card glass-card-hover" 
-                 style={{borderLeft: "4px solid var(--status-blue)", cursor: "pointer", transition: "0.2s"}}
-                 onClick={() => setFilterSeverity("info")}
-                 onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-5px)"}
-                 onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
-            >
-                <div className="card-header">
-                    <span className="card-icon">ℹ️</span>
-                    <h4>Info Logs</h4>
-                </div>
-                <div style={{fontSize: "2.5rem", fontWeight: "bold", color: "white"}}>{history.filter(h => h.severity === 'info').length}</div>
-                <div style={{fontSize: "0.8rem", color: "var(--text-muted)"}}>General updates</div>
-            </div>
-
-            {/* Warning Card - Interactive */}
-            <div className="analytics-card glass-card-hover" 
-                 style={{borderLeft: "4px solid var(--status-orange)", cursor: "pointer"}}
-                 onClick={() => setFilterSeverity("warning")}
-            >
-                <div className="card-header">
-                    <span className="card-icon">⚠️</span>
-                    <h4>Warnings (24h)</h4>
-                </div>
-                <div style={{fontSize: "2.5rem", fontWeight: "bold", color: "var(--status-orange)"}}>
-                    {history.filter(h => h.severity === 'warning').length}
-                </div>
-                <div style={{fontSize: "0.8rem", color: "var(--text-muted)"}}>Performance alerts</div>
-            </div>
-
-            {/* High Card - NEW & Interactive */}
-            <div className="analytics-card glass-card-hover" 
-                 style={{borderLeft: "4px solid #ff5722", cursor: "pointer"}}
-                 onClick={() => setFilterSeverity("high")}
-            >
-                <div className="card-header">
-                    <span className="card-icon">🔥</span>
-                    <h4>High Priority</h4>
-                </div>
-                <div style={{fontSize: "2.5rem", fontWeight: "bold", color: "#ff5722"}}>
-                    {history.filter(h => h.severity === 'high').length}
-                </div>
-                <div style={{fontSize: "0.8rem", color: "var(--text-muted)"}}>Severe issues</div>
-            </div>
-
-            {/* Critical Card - Interactive */}
-            <div className="analytics-card glass-card-hover" 
-                 style={{borderLeft: "4px solid var(--status-red)", cursor: "pointer"}}
-                 onClick={() => setFilterSeverity("critical")}
-            >
-                <div className="card-header">
-                    <span className="card-icon">🚨</span>
-                    <h4>Critical (24h)</h4>
-                </div>
-                <div style={{fontSize: "2.5rem", fontWeight: "bold", color: "var(--status-red)", animation: "pulse-red 2s infinite"}}>
-                    {history.filter(h => h.severity === 'critical').length}
-                </div>
-                <div style={{fontSize: "0.8rem", color: "var(--text-muted)"}}>Immediate action required</div>
-            </div>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: "30px" }}>
-            
-            {/* Left Column: Rules Management */}
-            <div className="up-widget glass-widget">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                    <h4 style={{ margin: 0 }}>Alert Rules</h4>
-                    <button onClick={() => setShowAddModal(true)} className="up-btn-blue" style={{ fontSize: "0.8rem", padding: "8px 16px" }}>
-                        + New Rule
-                    </button>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-                    {rules.length === 0 ? (
-                        <div className="up-empty-state" style={{ padding: "40px 0", fontSize: "0.9rem" }}>
-                            No alert rules configured.
-                        </div>
-                    ) : (
-                        rules.map(rule => (
-                            <div key={rule.id} style={{
-                                background: "rgba(255,255,255,0.03)",
-                                border: "1px solid rgba(255,255,255,0.05)",
-                                padding: "15px",
-                                borderRadius: "4px",
-                                position: "relative",
-                                transition: "0.2s"
-                            }} className="interactive-card">
-                                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                                    <div style={{ fontWeight: "bold", fontSize: "1rem" }}>{rule.name}</div>
-                                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                                        {getSeverityBadge(rule.severity)}
-                                        <button 
-                                            onClick={(e) => {
-                                                e.stopPropagation(); 
-                                                handleDeleteRule(rule.id);
-                                            }}
-                                            title="Delete Rule"
-                                            style={{ 
-                                                background: "none", 
-                                                border: "none", 
-                                                color: "var(--text-muted)", 
-                                                cursor: "pointer", 
-                                                fontSize: "1.2rem", 
-                                                lineHeight: 1,
-                                                padding: "0 5px"
-                                            }}
-                                        >×</button>
-                                    </div>
-                                </div>
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                                    <div><strong>Type:</strong> {rule.type}</div>
-                                    <div><strong>Condition:</strong> {rule.condition.replace(/_/g, ' ')}</div>
-                                    <div><strong>Channel:</strong> <span style={{ textTransform: "capitalize", color: "var(--status-blue)" }}>{rule.channel}</span></div>
-                                    <div><strong>Active:</strong> {rule.is_active ? "Yes" : "No"}</div>
-                                </div>
-                                {rule.threshold && (
-                                    <div style={{ marginTop: "8px", fontSize: "0.8rem", color: "var(--status-orange)" }}>
-                                        Threshold: {rule.threshold}
-                                    </div>
-                                )}
-                            </div>
-                        ))
-                    )}
-                </div>
-            </div>
-
-            {/* Right Column: History Log */}
-            <div className="up-widget glass-widget">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                    <h4 style={{ margin: 0 }}>Alert History</h4>
-                    <select 
-                        value={filterSeverity} 
-                        onChange={(e) => setFilterSeverity(e.target.value)}
-                        style={{ background: "var(--bg-dark)", color: "white", border: "1px solid var(--border-color)", padding: "5px 10px", borderRadius: "2px", fontSize: "0.8rem" }}
-                    >
-                        <option value="all">All Levels</option>
-                        <option value="critical">Critical Only</option>
-                        <option value="high">High Only</option>
-                        <option value="warning">Warning Only</option>
-                        <option value="info">Info Only</option>
-                    </select>
-                </div>
-
-                <div style={{ maxHeight: "500px", overflowY: "auto", paddingRight: "5px" }}>
-                    {filteredHistory.length === 0 ? (
-                        <div className="up-empty-state" style={{ padding: "40px 0", fontSize: "0.9rem" }}>
-                            No recent alerts found.
-                        </div>
-                    ) : (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
-                            {filteredHistory.map((alert, idx) => (
-                                <div key={alert.id} style={{
-                                    display: "flex",
-                                    alignItems: "flex-start",
-                                    gap: "15px",
-                                    padding: "12px 0",
-                                    borderBottom: idx === filteredHistory.length - 1 ? "none" : "1px solid rgba(255,255,255,0.05)"
-                                }}>
-                                    {/* Timeline Dot */}
-                                    <div style={{ position: "relative", paddingTop: "6px" }}>
-                                        <div style={{
-                                            width: "10px", height: "10px", borderRadius: "50%",
-                                            background: getSeverityColor(alert.severity),
-                                            boxShadow: `0 0 10px ${getSeverityColor(alert.severity)}`
-                                        }}></div>
-                                        {idx !== filteredHistory.length - 1 && (
-                                            <div style={{
-                                                position: "absolute", top: "16px", left: "4.5px", bottom: "-16px",
-                                                width: "1px", background: "rgba(255,255,255,0.1)"
-                                            }}></div>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Content */}
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                                            <span style={{ fontWeight: "bold", color: "var(--text-main)", fontSize: "0.9rem" }}>
-                                                {alert.message || "System Alert"}
-                                            </span>
-                                            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                                                {new Date(alert.triggered_at || alert.time).toLocaleString()}
-                                            </span>
-                                        </div>
-                                        <div style={{ display: "flex", gap: "10px", fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                                            <span>Via: <span style={{ textTransform: "capitalize", color: "white" }}>{alert.channel}</span></span>
-                                            <span>Status: <span style={{ color: alert.status === 'sent' ? 'var(--status-green)' : 'var(--status-red)' }}>{alert.status}</span></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-        </div>
-      </main>
-
-      {/* Add Rule Modal with Customization */}
-      {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "500px" }}>
-            <h3>Create Alert Rule</h3>
-            <form onSubmit={handleCreateRule} style={{ marginTop: "20px" }}>
-                <div className="status-row">
-                    <label>Rule Name</label>
-                    <input 
-                        type="text" 
-                        required
-                        value={newRule.name} 
-                        onChange={e => setNewRule({...newRule, name: e.target.value})}
-                        style={{ background: "rgba(0,0,0,0.5)", border: "1px solid var(--border-color)", color: "white", padding: "8px", borderRadius: "2px", width: "60%" }}
-                    />
-                </div>
-                
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", marginTop: "15px" }}>
-                    <div>
-                        <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "5px" }}>Target Type</label>
-                        <select 
-                            value={newRule.type}
-                            onChange={e => setNewRule({...newRule, type: e.target.value, target_id: null})}
-                            style={{ width: "100%", background: "var(--bg-dark)", color: "white", border: "1px solid var(--border-color)", padding: "8px", borderRadius: "2px" }}
-                        >
-                            <option value="service">Service Monitor</option>
-                            <option value="domain">Domain Asset</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "5px" }}>Severity</label>
-                        <select 
-                            value={newRule.severity}
-                            onChange={e => setNewRule({...newRule, severity: e.target.value})}
-                            style={{ width: "100%", background: "var(--bg-dark)", color: "white", border: "1px solid var(--border-color)", padding: "8px", borderRadius: "2px" }}
-                        >
-                            <option value="info">Info</option>
-                            <option value="warning">Warning</option>
-                            <option value="high">High</option>
-                            <option value="critical">Critical</option>
-                        </select>
-                    </div>
-                </div>
-
-                {/* NEW: Domain Customization */}
-                {newRule.type === "domain" && (
-                    <div style={{ marginTop: "15px" }}>
-                        <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "5px" }}>Target Domain</label>
-                        <select 
-                            value={newRule.target_id || ""}
-                            onChange={e => setNewRule({...newRule, target_id: e.target.value ? parseInt(e.target.value) : null})}
-                            style={{ width: "100%", background: "var(--bg-dark)", color: "white", border: "1px solid var(--border-color)", padding: "8px", borderRadius: "2px" }}
-                        >
-                            <option value="">All Domains</option>
-                            {domains.map(d => (
-                                <option key={d.id} value={d.id}>{d.domain_name}</option>
-                            ))}
-                        </select>
-                    </div>
-                )}
-
-                <div style={{ marginTop: "15px" }}>
-                    <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "5px" }}>Trigger Condition</label>
-                    <select 
-                        value={newRule.condition}
-                        onChange={e => setNewRule({...newRule, condition: e.target.value})}
-                        style={{ width: "100%", background: "var(--bg-dark)", color: "white", border: "1px solid var(--border-color)", padding: "8px", borderRadius: "2px" }}
-                    >
-                        {newRule.type === "domain" ? (
-                            <>
-                                <option value="ssl_expiring">SSL Certificate Expiring</option>
-                                <option value="domain_expiring">Domain Expiring</option>
-                                <option value="dns_failure">DNS Resolution Failure</option>
-                            </>
-                        ) : (
-                            <>
-                                <option value="status_down">Service Status Down</option>
-                                <option value="response_time_high">Response Time High</option>
-                            </>
-                        )}
-                    </select>
-                </div>
-
-                <div className="status-row" style={{ marginTop: "15px" }}>
-                    <label>Threshold (Optional)</label>
-                    <input 
-                        type="text" 
-                        placeholder={newRule.type === "domain" ? "e.g. < 30 days" : "e.g. > 500ms"}
-                        value={newRule.threshold} 
-                        onChange={e => setNewRule({...newRule, threshold: e.target.value})}
-                        style={{ background: "rgba(0,0,0,0.5)", border: "1px solid var(--border-color)", color: "white", padding: "8px", borderRadius: "2px", width: "60%" }}
-                    />
-                </div>
-
-                <div style={{ marginTop: "15px" }}>
-                    <label style={{ display: "block", fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "5px" }}>Notification Channel</label>
-                    <div style={{ display: "flex", gap: "10px" }}>
-                        {['email', 'sms', 'webhook'].map(ch => (
-                            <label key={ch} style={{ 
-                                background: newRule.channel === ch ? "var(--status-blue)" : "rgba(255,255,255,0.05)",
-                                color: newRule.channel === ch ? "black" : "var(--text-muted)",
-                                padding: "8px 16px", 
-                                borderRadius: "4px", 
-                                cursor: "pointer", 
-                                fontSize: "0.8rem",
-                                textTransform: "capitalize",
-                                border: "1px solid var(--border-color)"
-                            }}>
-                                <input type="radio" name="channel" value={ch} checked={newRule.channel === ch} onChange={() => setNewRule({...newRule, channel: ch})} style={{ display: "none" }} />
-                                {ch}
-                            </label>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="modal-actions" style={{ marginTop: "25px" }}>
-                    <button type="button" onClick={() => setShowAddModal(false)} className="btn-cancel">Cancel</button>
-                    <button type="submit" className="btn-submit">Create Rule</button>
-                </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
 // ================= MAIN APP COMPONENT =================
 function App() {
   const [showLanding, setShowLanding] = useState(true);
@@ -2680,9 +2141,6 @@ function App() {
     if (selectedCard === "domains") {
       return <DomainTrackingComponent onBack={() => setSelectedCard(null)} token={authToken} username={formData.username} />;
     }
-    if (selectedCard === "alerts") {
-      return <AlertDashboardComponent onBack={() => setSelectedCard(null)} token={authToken} />;
-    }
     return (
       <div className="dashboard">
         <header className="dashboard-header">
@@ -2752,17 +2210,17 @@ function App() {
           <div className="card" onClick={() => setSelectedCard("domains")}>
             <span className="icon">🔍</span>
             <h3>Domain Tracking</h3>
-            <p>Deep DNS inspection, SSL monitoring, and domain reputation.</p>
-          </div>
-          <div className="card" onClick={() => setSelectedCard("alerts")}>
-            <span className="icon">🚨</span>
-            <h3>Alert Dashboard</h3>
-            <p>Manage notification rules, view incident history, and configure alerts.</p>
+            <p>Deep DNS inspection, WHOIS analysis, and domain reputation.</p>
           </div>
           <div className="card">
             <span className="icon">🛡️</span>
             <h3>Threat Detection</h3>
             <p>Identify vulnerabilities and suspicious activities.</p>
+          </div>
+          <div className="card">
+            <span className="icon">🚨</span>
+            <h3>Alert Dashboard</h3>
+            <p>Instant alerts for critical security events.</p>
           </div>
         </section>
       </div>

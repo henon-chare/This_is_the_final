@@ -1,4 +1,3 @@
-# security.py
 from passlib.context import CryptContext
 
 pwd = CryptContext(schemes=["bcrypt"])
