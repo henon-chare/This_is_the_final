@@ -1,4 +1,3 @@
-// App.js
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import "./App.css";
 
@@ -16,6 +15,14 @@ const formatDate = (dateStr) => {
   } catch (e) {
     return "Unknown";
   }
+};
+
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return "-";
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleString();
+  } catch (e) { return dateStr; }
 };
 
 // PASSWORD VALIDATION HELPER (Mirrors Backend)
@@ -151,181 +158,6 @@ const PasswordModal = ({ isOpen, onClose, onSubmit, title, username }) => {
   );
 };
 
-// ================= LANDING PAGE COMPONENT =================
-const LandingPage = ({ onLogin, onRegister }) => {
-  const scrollToSection = (id) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  return (
-    <div className="landing-page">
-      <div className="glow-orb orb-1"></div>
-      <div className="glow-orb orb-2"></div>
-
-      <nav className="landing-nav">
-        <div className="brand">
-          Cyber<span>Guard</span>
-        </div>
-        <div className="nav-actions">
-          <a 
-            href="#contact" 
-            onClick={(e) => { e.preventDefault(); scrollToSection('contact'); }} 
-            className="btn-nav contact"
-          >
-            Contact Us
-          </a>
-          <button onClick={onLogin} className="btn-nav login">
-            Login
-          </button>
-          <button onClick={onRegister} className="btn-nav register">
-            Register
-          </button>
-        </div>
-      </nav>
-
-      <header className="hero-section">
-        <h1 className="hero-title">
-          Next-Generation Domain
-          <br /> Monitoring & Detection
-        </h1>
-        <p className="hero-subtitle">
-          Unify automated domain intelligence with manual asset governance. Secure your infrastructure with  
-              real-time anomaly detection and comprehensive risk reporting.
-        </p>
-        <div className="cta-group">
-            <button 
-                onClick={() => scrollToSection('features')} 
-                className="btn-large btn-secondary-large" 
-                style={{ 
-                    background: 'transparent', 
-                    border: '1px solid var(--status-blue)',
-                    color: 'var(--status-blue)',
-                    padding: '16px 48px',
-                    fontSize: '1.1rem',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                    borderRadius: '2px',
-                    transition: '0.2s'
-                }}
-                onMouseEnter={(e) => {
-                    e.target.style.background = 'rgba(6, 182, 212, 0.1)';
-                    e.target.style.color = 'white';
-                }}
-                onMouseLeave={(e) => {
-                    e.target.style.background = 'transparent';
-                    e.target.style.color = 'var(--status-blue)';
-                }}
-            >
-                Learn More
-            </button>
-        </div>
-      </header>
-
-      <section id="features" className="features-section">
-        <div className="section-header">
-          <h2>System Capabilities</h2>
-          <p>Everything you need to manage your digital presence.</p>
-        </div>
-        <div className="cards-grid">
-          <div className="feature-card">
-            <div className="card-icon">📡</div>
-            <h3>Auto-Tracking</h3>
-            <p>
-              Instant updates on domain status, DNS propagation, and WHOIS changes via RDAP.
-            </p>
-          </div>
-          <div className="feature-card">
-            <div className="card-icon">📝</div>
-            <h3>Manual Asset Mgmt</h3>
-            <p>
-              Define ownership, purpose, and infrastructure details for domains that lack public data.
-            </p>
-          </div>
-          <div className="feature-card">
-            <div className="card-icon">📊</div>
-            <h3>Risk Intelligence</h3>
-            <p>
-              Visual risk scoring based on expiration, compliance checklists, and renewal workflows.
-            </p>
-          </div>
-          
-          <div className="feature-card">
-            <div className="card-icon">⚡</div>
-            <h3>Real-Time Monitoring</h3>
-            <p>
-              Live HTTP/S uptime tracking with adaptive anomaly detection to catch performance bottlenecks.
-            </p>
-          </div>
-          <div className="feature-card">
-            <div className="card-icon">🔒</div>
-            <h3>Secure Reports</h3>
-            <p>
-              Generate password-protected PDF audit trails and executive summaries for compliance.
-            </p>
-          </div>
-          <div className="feature-card">
-            <div className="card-icon">🚨</div>
-            <h3>Incident Response</h3>
-            <p>
-              Detailed incident logging with root cause analysis and automated alerting workflows.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section id="contact" className="contact-section">
-        <div className="section-header">
-          <h2>Contact Our Developers</h2>
-          <p>Connect with the architects behind your digital defense.</p>
-        </div>
-        <div className="team-grid">
-          <div className="team-card">
-            <div className="avatar">HC</div>
-            <div className="dev-name">Henon Chare</div>
-            <div className="dev-role">Lead Developer</div>
-            <a href="mailto:henonchare21@gmail.com" className="contact-link email-link">📧 henonchare21@gmail.com</a>
-            <a href="tel:+251982049520" className="contact-link phone-link">📞 +251 98 204 9520</a>
-            <a href="https://github.com/henon-chare" target="_blank" rel="noopener noreferrer" className="contact-link github-link">💻 henon-chare</a>
-          </div>
-          <div className="team-card">
-            <div className="avatar">BT</div>
-            <div className="dev-name">Biniyam Temesgen</div>
-            <div className="dev-role">Backend Engineer</div>
-            <a href="mailto:biniyamtemesgen40@gmail.com" className="contact-link email-link">📧 biniyamtemesgen40@gmail.com</a>
-            <a href="tel:+251985957185" className="contact-link phone-link">📞 +251 98 595 7185</a>
-            <a href="https://github.com/Bi-ni-yam" target="_blank" rel="noopener noreferrer" className="contact-link github-link">💻 Bi-ni-yam</a>
-          </div>
-          <div className="team-card">
-            <div className="avatar">MK</div>
-            <div className="dev-name">Mikiyas Kindie</div>
-            <div className="dev-role">Frontend Specialist</div>
-            <a href="mailto:mikiyaskindie6@gmail.com" className="contact-link email-link">📧 mikiyaskindie6@gmail.com</a>
-            <a href="tel:+251948010770" className="contact-link phone-link">📞 +251 94 801 0770</a>
-            <a href="https://github.com/mikii122129" target="_blank" rel="noopener noreferrer" className="contact-link github-link">💻 mikii122129</a>
-          </div>
-          <div className="team-card">
-            <div className="avatar">AM</div>
-            <div className="dev-name">Abinet Melkamu</div>
-            <div className="dev-role">System Architect</div>
-            <a href="mailto:instaman2124@gmail.com" className="contact-link email-link">📧 instaman2124@gmail.com</a>
-            <a href="tel:+251923248825" className="contact-link phone-link">📞 +251 92 324 8825</a>
-            <a href="https://github.com/abinetbdu" target="_blank" rel="noopener noreferrer" className="contact-link github-link">💻 abinetbdu</a>
-          </div>
-        </div>
-      </section>
-
-      <footer className="landing-footer">
-        &copy; 2026 Domain Monitoring and Detecting System. All rights reserved.
-      </footer>
-    </div>
-  );
-};
-
 // ================= SPARKLINE COMPONENT =================
 const Sparkline = ({ history, width = 200, height = 40, isDegraded }) => {
   const canvasRef = useRef(null);
@@ -415,6 +247,656 @@ const Sparkline = ({ history, width = 200, height = 40, isDegraded }) => {
       />
     </div>
   );
+};
+
+// ================= ADVANCED PROFESSIONAL ALERT DASHBOARD COMPONENT =================
+const AlertDashboardComponent = ({ onBack, token }) => {
+    const [view, setView] = useState('rule-config');
+    const [loading, setLoading] = useState(true);
+    const [historyFilter, setHistoryFilter] = useState('all'); 
+
+    // Data
+    const [rules, setRules] = useState([]);
+    const [history, setHistory] = useState([]);
+    const [domains, setDomains] = useState([]);
+    const [monitors, setMonitors] = useState([]); 
+    
+    // Form State
+    const [formData, setFormData] = useState({
+        name: "",
+        type: "service",
+        target_id: "", 
+        condition: "status_down",
+        threshold: "",
+        severity: "critical",
+        channel: "email"
+    });
+
+    // Helper: Extract Root Domain
+    const getRootDomain = (url) => {
+        try {
+            const hostname = new URL(url).hostname;
+            const parts = hostname.split('.');
+            if (parts.length > 2) {
+                return parts.slice(-2).join('.');
+            }
+            return hostname;
+        } catch (e) {
+            return url;
+        }
+    };
+
+    // Fetch all initial data & Polling
+    useEffect(() => {
+        fetchData();
+        const interval = setInterval(fetchData, 5000);
+        return () => clearInterval(interval);
+    }, [token]);
+
+    const fetchData = async () => {
+        try {
+            const headers = { 'Authorization': `Bearer ${token}` };
+            
+            const [rRes, hRes, dRes, sRes] = await Promise.all([
+                fetch("http://localhost:8000/alerts/rules", { headers }),
+                fetch("http://localhost:8000/alerts/history?limit=100", {headers }),
+                fetch("http://localhost:8000/domain/list", { headers }),
+                fetch("http://localhost:8000/status", { headers }) 
+            ]);
+
+            if (rRes.ok) setRules(await rRes.json());
+            if (hRes.ok) {
+                const newHistory = await hRes.json();
+                setHistory(newHistory); 
+            }
+            if (dRes.ok) setDomains(await dRes.json());
+            
+            if (sRes.ok) {
+                const statusData = await sRes.json();
+                setMonitors(statusData.targets || []);
+            }
+            setLoading(false);
+        } catch (e) {
+            console.error("Failed to load alert data", e);
+            if(window.showToast) window.showToast("Failed to load data", "error");
+        }
+    };
+
+    // --- Handlers ---
+    const handleDeleteRule = async (ruleId) => {
+        if (!window.confirm("Confirm deletion of Alert Rule Protocol?")) return;
+        
+        try {
+            const res = await fetch(`http://localhost:8000/alerts/rules/${ruleId}`, {
+                method: "DELETE",
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                setRules(prev => prev.filter(r => r.id !== ruleId));
+                if(window.showToast) window.showToast("Protocol Deleted", "success");
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.detail || "Failed to delete rule");
+            }
+        } catch (e) {
+            console.error(e);
+            if(window.showToast) window.showToast(e.message || "Network error", "error");
+        }
+    };
+
+        // ... inside App.js, inside AlertDashboardComponent ...
+
+    const handleSubmitRule = async (e) => {
+        e.preventDefault();
+        
+        let payload = { ...formData };
+        
+        // --- FIXED LOGIC: TARGET RESOLUTION ---
+        // If it's a service, the user typed a URL. We send it as 'target_url' 
+        // so the backend can find the specific Monitor ID.
+        // If it's a domain, 'target_id' is already an integer from the dropdown.
+        if (payload.type === "service") {
+            payload.target_url = formData.target_id; 
+            payload.target_id = null; // Clear ID to avoid type errors
+        } else if (payload.type === "domain") {
+            const parsedId = parseInt(payload.target_id, 10);
+            payload.target_id = isNaN(parsedId) ? null : parsedId;
+        } else {
+            payload.target_id = null;
+        }
+
+        // Clean Threshold
+        // If status_down, we force threshold to null as it's implicit
+        if (payload.condition === "status_down") {
+            payload.threshold = null;
+        } else if (!payload.threshold || payload.threshold.trim() === "") {
+            payload.threshold = null;
+        }
+
+        // Smart Defaults (Keep your existing logic)
+        if (payload.type === "domain") {
+            payload.condition = "domain_expiring";
+            if (!payload.threshold) payload.threshold = "< 30 days";
+        } else {
+            if (payload.condition === "response_time_high" && !payload.threshold) {
+                payload.threshold = "> 1000"; // Default backup
+            }
+        }
+
+        try {
+            const res = await fetch("http://localhost:8000/alerts/rules", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                const newRule = await res.json();
+                setRules(prev => [...prev, newRule]);
+                if(window.showToast) window.showToast("Alert Protocol Deployed", "success");
+                setView('rule-config'); 
+                resetForm();
+            } else {
+                const err = await res.json().catch(() => ({ detail: "Unknown error" }));
+                if(window.showToast) window.showToast(`Error: ${err.detail}`, "error");
+            }
+        } catch (e) {
+            console.error(e);
+            if(window.showToast) window.showToast("Network error while creating rule", "error");
+        }
+    };
+
+// ... rest of App.js
+
+    const resetForm = () => {
+        setFormData({
+            name: "",
+            type: "service",
+            target_id: "",
+            condition: "status_down",
+            threshold: "",
+            severity: "critical",
+            channel: "email"
+        });
+    };
+    
+    const handleOpenCreateRule = (type) => {
+        resetForm();
+        setFormData(prev => ({
+            ...prev,
+            type: type,
+            condition: type === 'domain' ? 'domain_expiring' : 'status_down',
+            threshold: type === 'domain' ? '< 30 days' : '> 1000'
+        }));
+        setView('create-rule');
+    };
+
+    // --- Render Helpers ---
+    const getSeverityColor = (sev) => {
+        switch(sev) {
+            case 'critical': return 'var(--status-red)';
+            case 'high': return 'var(--status-orange)';
+            case 'warning': return '#fbbf24'; 
+            case 'info': return 'var(--status-blue)';
+            default: return 'var(--text-muted)';
+        }
+    };
+
+    const getSeverityClass = (sev) => {
+        switch(sev) {
+            case 'critical': return 'sev-critical';
+            case 'high': return 'sev-high';
+            case 'warning': return 'sev-warning';
+            case 'info': return 'sev-info';
+            default: return 'sev-info';
+        }
+    };
+
+    // --- Sidebar ---
+    const renderSidebar = () => (
+        <aside className="alert-dash-sidebar">
+            <div className="alert-sidebar-header">
+                <h2>Alert Center</h2>
+                <div className="status-pill live">SYSTEM ACTIVE</div>
+            </div>
+            <nav className="alert-nav">
+                <div className={`alert-nav-item ${view === 'rule-config' ? 'active' : ''}`} onClick={() => { setView('rule-config'); }}>
+                    <span className="nav-icon">⚙️</span>
+                    <span className="nav-text">Configuration</span>
+                </div>
+                <div className={`alert-nav-item ${view === 'active-alerts' ? 'active' : ''}`} onClick={() => { setView('active-alerts'); }}>
+                    <span className="nav-icon">🚨</span>
+                    <span className="nav-text">Active Threats</span>
+                </div>
+                <div className={`alert-nav-item ${view === 'history' ? 'active' : ''}`} onClick={() => { setView('history'); }}>
+                    <span className="nav-icon">📜</span>
+                    <span className="nav-text">Incident Log</span>
+                </div>
+            </nav>
+            <div className="alert-footer">
+                <button onClick={onBack} className="btn-back-main">← Back to Dashboard</button>
+            </div>
+        </aside>
+    );
+
+    // --- View 1: Configuration ---
+    const renderRuleConfigView = () => {
+        return (
+            <main className="alert-content-area">
+                <header className="alert-page-header">
+                    <div>
+                        <h3>Alert Protocols</h3>
+                        <p className="header-subtitle">Manage automated response triggers</p>
+                    </div>
+                </header>
+
+                <div className="alert-config-grid">
+                    {/* Left Column: Protocols */}
+                    <div className="protocol-section">
+                        <div className="section-subtitle">Define New Protocol</div>
+                        <div className="protocol-selection-grid">
+                            
+                            <div className="proto-select-card" onClick={() => handleOpenCreateRule('service')}>
+                                <div className="proto-icon-bg blue">📡</div>
+                                <div className="proto-info">
+                                    <h4>Uptime Monitor</h4>
+                                    <p>Latency & heartbeat failure logic</p>
+                                </div>
+                                <div className="proto-arrow">→</div>
+                            </div>
+
+                            <div className="proto-select-card" onClick={() => handleOpenCreateRule('domain')}>
+                                <div className="proto-icon-bg green">🌐</div>
+                                <div className="proto-info">
+                                    <h4>Asset Tracking</h4>
+                                    <p>Domain expiration & risk logic</p>
+                                </div>
+                                <div className="proto-arrow">→</div>
+                            </div>
+
+                            <div className="proto-select-card disabled">
+                                <div className="proto-icon-bg orange">🛡️</div>
+                                <div className="proto-info">
+                                    <h4>Threat Detection</h4>
+                                    <p>WAF & Intrusion Signatures</p>
+                                </div>
+                                <div className="proto-lock">🔒</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    {/* Right Column: Active Rules Table */}
+                    <div className="rules-list-section">
+                        <div style={{display:'flex', justifyContent:'space-between', marginBottom:'15px'}}>
+                            <div className="section-subtitle" style={{marginBottom:0}}>Active Protocols</div>
+                            <span style={{fontSize:'0.8rem', color:'var(--status-green)'}}>{rules.length} RUNNING</span>
+                        </div>
+                        
+                        <div className="cyber-table-container compact">
+                            <div className="cyber-table-header" style={{gridTemplateColumns:'1.5fr 1fr 1.5fr 1fr 40px'}}>
+                                <span>NAME</span>
+                                <span>TYPE</span>
+                                <span>TRIGGER</span>
+                                <span>SEVERITY</span>
+                                <span></span>
+                            </div>
+                            {rules.length === 0 ? (
+                                <div className="empty-table-msg">No active protocols found.</div>
+                            ) : (
+                                <div className="cyber-table-body">
+                                    {rules.map(rule => (
+                                        <div key={rule.id} className="cyber-table-row" style={{gridTemplateColumns:'1.5fr 1fr 1.5fr 1fr 40px'}}>
+                                            <div className="col-name">{rule.name}</div>
+                                            <div className="col-type">{rule.type}</div>
+                                            <div className="col-trigger">{rule.condition}</div>
+                                            <div>
+                                                <span className={`severity-tag ${getSeverityClass(rule.severity)}`}>
+                                                    {rule.severity}
+                                                </span>
+                                            </div>
+                                            <div className="col-action">
+                                                <button 
+                                                    onClick={() => handleDeleteRule(rule.id)}
+                                                    className="btn-icon-delete"
+                                                    title="Delete Rule"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </main>
+        );
+    };
+
+       // --- View 2: Create Rule Form (UPDATED) ---
+    const renderCreateRuleView = () => {
+        const isService = formData.type === 'service';
+        
+        // Determine placeholder and type for the threshold input based on condition
+        const getThresholdConfig = () => {
+            if (formData.condition === "status_down") return { show: false };
+            if (formData.condition === "response_time_high") {
+                return { 
+                    show: true, 
+                    type: "number", 
+                    label: "RESPONSE TIME THRESHOLD (MS)", 
+                    placeholder: "e.g. 500",
+                    hint: "Alert triggers when response time > X ms"
+                };
+            }
+            if (formData.condition === "http_error") {
+                return { 
+                    show: true, 
+                    type: "text", 
+                    label: "HTTP STATUS CODE", 
+                    placeholder: "e.g. 404, 500, 503",
+                    hint: "Alert triggers when server returns this specific error code"
+                };
+            }
+            return { show: false }; // Default for domain types or unhandled
+        };
+
+        const thresholdConfig = getThresholdConfig();
+
+        return (
+            <main className="alert-content-area">
+                <header className="alert-page-header">
+                    <div>
+                        <h3>{isService ? "New Uptime Protocol" : "New Asset Protocol"}</h3>
+                        <p className="header-subtitle">Configure trigger parameters</p>
+                    </div>
+                    <button onClick={() => setView('rule-config')} className="btn-secondary">Cancel</button>
+                </header>
+                
+                <div className="cyber-form-container">
+                    <form onSubmit={handleSubmitRule}>
+                        
+                        <div style={{marginBottom: "25px"}}>
+                            <label className="form-label">Protocol Name</label>
+                            <input 
+                                required 
+                                className="cyber-input" 
+                                placeholder={isService ? "e.g. API Gateway Latency" : "e.g. Production Domain Expiry"} 
+                                value={formData.name} 
+                                onChange={e => setFormData({...formData, name: e.target.value})} 
+                            />
+                        </div>
+
+                        <div style={{marginBottom: "25px"}}>
+                            <label className="form-label">
+                                {isService ? 'TARGET URL' : 'DOMAIN ASSET'}
+                            </label>
+                            {isService ? (
+                                <input 
+                                    required 
+                                    className="cyber-input" 
+                                    placeholder="https://api.sentinel.ai" 
+                                    value={formData.target_id} 
+                                    onChange={e => setFormData({...formData, target_id: e.target.value})} 
+                                />
+                            ) : (
+                                <select 
+                                    required
+                                    className="cyber-input" 
+                                    value={formData.target_id} 
+                                    onChange={(e) => setFormData({...formData, target_id: e.target.value})}
+                                >
+                                    <option value="">-- Select Domain --</option>
+                                    {domains.map(d => (
+                                        <option key={d.id} value={d.id}>{d.domain_name}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+
+                        {/* UPDATED CONDITION SELECTOR */}
+                        {isService ? (
+                            <div style={{marginBottom: "25px"}}>
+                                <label className="form-label">TRIGGER CONDITION</label>
+                                <select 
+                                    required
+                                    className="cyber-input" 
+                                    value={formData.condition} 
+                                    onChange={(e) => setFormData({...formData, condition: e.target.value, threshold: ''})} // Reset threshold on change
+                                >
+                                    <option value="status_down">Service Down (Any Error)</option>
+                                    <option value="response_time_high">High Response Time</option>
+                                    <option value="http_error">Specific HTTP Error</option>
+                                </select>
+                            </div>
+                        ) : (
+                            <div style={{marginBottom: "25px"}}>
+                                <label className="form-label">TRIGGER CONDITION</label>
+                                <input 
+                                    disabled
+                                    className="cyber-input" 
+                                    value="Domain Expiration" 
+                                    style={{opacity: 0.7, cursor: 'not-allowed'}}
+                                />
+                            </div>
+                        )}
+
+                        {/* CONDITIONAL THRESHOLD INPUT */}
+                        {isService && thresholdConfig.show && (
+                            <div style={{marginBottom: "25px", animation: "fadeInUp 0.3s ease"}}>
+                                <label className="form-label">{thresholdConfig.label}</label>
+                                <input 
+                                    type={thresholdConfig.type}
+                                    required
+                                    className="cyber-input" 
+                                    placeholder={thresholdConfig.placeholder}
+                                    value={formData.threshold}
+                                    onChange={e => setFormData({...formData, threshold: e.target.value})}
+                                />
+                                <div className="input-hint">{thresholdConfig.hint}</div>
+                            </div>
+                        )}
+
+                        {/* Fallback for Domain Expiry (Hidden logic handled in submit) */}
+                        {!isService && (
+                            <div style={{marginBottom: "25px"}}>
+                                <label className="form-label">EXPIRATION WINDOW (DAYS)</label>
+                                <input 
+                                    type="number"
+                                    className="cyber-input" 
+                                    placeholder="e.g. 30" 
+                                    value={formData.threshold}
+                                    onChange={e => setFormData({...formData, threshold: e.target.value})}
+                                />
+                                <div className="input-hint">Alert triggers if domain expires in &lt; X days</div>
+                            </div>
+                        )}
+
+                        <div style={{marginBottom: "35px"}}>
+                            <label className="form-label">SEVERITY CLASSIFICATION</label>
+                            <div className="severity-toggle-group">
+                                {['critical', 'high', 'warning', 'info'].map(lvl => (
+                                    <div 
+                                        key={lvl} 
+                                        className={`severity-pill ${formData.severity === lvl ? 'active' : ''}`} 
+                                        data-val={lvl}
+                                        onClick={() => setFormData({...formData, severity: lvl})}
+                                    >
+                                        {lvl.toUpperCase()}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="form-actions-btns" style={{justifyContent: 'flex-end'}}>
+                            <button type="button" onClick={() => setView('rule-config')} className="btn-cancel-cyber">Discard</button>
+                            <button type="submit" className="btn-deploy">Deploy Protocol</button>
+                        </div>
+                    </form>
+                </div>
+            </main>
+        );
+    };
+
+    // --- View 3: Active Alerts ---
+    const renderActiveAlertsView = () => {
+        const activeAlerts = history.filter(h => 
+            (h.severity === 'critical' || h.severity === 'high') && 
+            new Date(h.time) > new Date(Date.now() - 24*60*60*1000) 
+        );
+
+        return (
+            <main className="alert-content-area">
+                <header className="alert-page-header">
+                    <div>
+                        <h3>Active Threats</h3>
+                        <p className="header-subtitle">Real-time critical event stream</p>
+                    </div>
+                </header>
+
+                {activeAlerts.length === 0 ? (
+                    <div className="empty-state-enhanced">
+                        <div className="empty-icon">🛡️</div>
+                        <h4>SECURE STATUS</h4>
+                        <p>No critical threats detected in the last 24 hours.</p>
+                    </div>
+                ) : (
+                    <div className="incident-feed">
+                        {activeAlerts.map(h => (
+                            <div key={h.id} className="incident-card">
+                                <div className={`incident-indicator ${getSeverityClass(h.severity)}`}></div>
+                                <div className="incident-content">
+                                    <div className="incident-meta">
+                                        <span className="timestamp">{new Date(h.time).toLocaleString()}</span>
+                                        <span className="severity-tag" style={{fontSize:'0.7rem'}}>{h.severity}</span>
+                                    </div>
+                                    <div className="incident-message">{h.message || "System Event Triggered"}</div>
+                                    <div className="incident-details">
+                                        <span>Rule ID: #{h.rule_id}</span>
+                                        <span>Channel: {h.channel}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </main>
+        );
+    };
+
+    // --- View 4: History ---
+    const renderHistoryView = () => {
+        const cardData = [
+            { id: 'all', label: 'All Events', count: history.length, color: 'var(--text-muted)' },
+            { id: 'critical', label: 'Critical', count: history.filter(h => h.severity === 'critical').length, color: 'var(--status-red)' },
+            { id: 'high', label: 'High', count: history.filter(h => h.severity === 'high').length, color: 'var(--status-orange)' },
+            { id: 'warning', label: 'Warning', count: history.filter(h => h.severity === 'warning').length, color: '#fbbf24' },
+            { id: 'info', label: 'Info', count: history.filter(h => h.severity === 'info').length, color: 'var(--status-blue)' },
+        ];
+
+        const filteredHistory = history.filter(h => {
+            if (historyFilter === 'all') return true;
+            return h.severity === historyFilter;
+        });
+
+        return (
+            <main className="alert-content-area">
+                <header className="alert-page-header">
+                    <div>
+                        <h3>Incident Log</h3>
+                        <p className="header-subtitle">Historical audit trail</p>
+                    </div>
+                </header>
+
+                <div className="history-stats-bar">
+                    {cardData.map(card => (
+                        <div 
+                            key={card.id}
+                            className={`h-stat-card ${historyFilter === card.id ? 'active' : ''}`}
+                            onClick={() => setHistoryFilter(card.id)}
+                            style={{ borderColor: historyFilter === card.id ? card.color : 'transparent' }}
+                        >
+                            <div className="h-stat-count" style={{ color: card.color }}>{card.count}</div>
+                            <div className="h-stat-label">{card.label}</div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="audit-list-container full-height">
+                    {filteredHistory.length === 0 ? (
+                        <div className="empty-state-enhanced">
+                            <div className="empty-icon">📭</div>
+                            <p>No events found for this filter.</p>
+                        </div>
+                    ) : (
+                        filteredHistory.map(h => (
+                            <div key={h.id} className="audit-row">
+                                <div className="audit-time">
+                                    <div>{new Date(h.time).toLocaleDateString()}</div>
+                                    <div className="time-sub">{new Date(h.time).toLocaleTimeString()}</div>
+                                </div>
+                                <div className="audit-body">
+                                    <div className="audit-header">
+                                        <span className={`severity-tag ${getSeverityClass(h.severity)}`}>{h.severity}</span>
+                                        <span className="mono-text">Rule #{h.rule_id}</span>
+                                    </div>
+                                    <div className="audit-text">{h.message || "Standard System Check"}</div>
+                                </div>
+                                <div className="audit-channel">
+                                    {h.channel}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </main>
+        );
+    };
+    
+    if (loading) return <div className="loading-overlay">INITIALIZING SECURITY PROTOCOLS...</div>;
+
+    return (
+        <div className="alert-dashboard-layout">
+            {renderSidebar()}
+            {view === 'rule-config' && renderRuleConfigView()}
+            {view === 'create-rule' && renderCreateRuleView()}
+            {view === 'active-alerts' && renderActiveAlertsView()}
+            {view === 'history' && renderHistoryView()}
+        </div>
+    );
+};
+// ================= GLOBAL TOAST SYSTEM =================
+const ToastContainer = () => {
+    const [toasts, setToasts] = useState([]);
+
+    useEffect(() => {
+        window.showToast = (message, type = "info") => {
+            const id = Date.now();
+            setToasts(prev => [...prev, { id, message, type }]);
+            setTimeout(() => {
+                setToasts(prev => prev.filter(t => t.id !== id));
+            }, 4000);
+        };
+    }, []);
+
+    return (
+        <div className="toast-container">
+            {toasts.map(toast => (
+                <div key={toast.id} className={`toast ${toast.type}`}>
+                    <div className="toast-icon">
+                        {toast.type === 'success' ? '✅' : toast.type === 'error' ? '❌' : 'ℹ️'}
+                    </div>
+                    <div>{toast.message}</div>
+                </div>
+            ))}
+        </div>
+    );
 };
 
 // ================= UPGRADED DOMAIN TRACKING COMPONENT =================
@@ -1602,7 +2084,7 @@ const MonitoringComponent = ({ onBack, token, username }) => {
                           </div>
                           <div style={{textAlign: "center", padding: "15px", background: "rgba(0,0,0,0.2)", borderRadius: "4px"}}>
                               <div style={{fontSize: "2rem", fontWeight: "bold", color: "var(--status-red)"}}>{max} ms</div>
-                              <div style={{color: "var(--text-muted)", textTransform: "uppercase", fontSize: "0.75rem"}}>Maximum</div>
+                              <div style={{color: "var(--text-muted)", textTransform: "uppercase", fontSize: "0.75rem"}}>Minimum</div>
                           </div>
                       </div>
                   </div>
@@ -1655,10 +2137,10 @@ const MonitoringComponent = ({ onBack, token, username }) => {
                       <table style={{width: "100%", textAlign: "left", borderCollapse: "collapse", marginTop: "10px"}}>
                           <thead>
                               <tr style={{borderBottom: "1px solid rgba(255,255,255,0.1)"}}>
-                                  <th style={{padding: "10px", color: "var(--text-muted)", fontSize: "0.8rem"}}>Status</th>
-                                  <th style={{padding: "10px", color: "var(--text-muted)", fontSize: "0.8rem"}}>Root Cause</th>
-                                  <th style={{padding: "10px", color: "var(--text-muted)", fontSize: "0.8rem"}}>Started</th>
-                                  <th style={{padding: "10px", color: "var(--text-muted)", fontSize: "0.8rem"}}>Duration</th>
+                                  <th style={{padding: "10px", color: "var(--text-muted)", fontSize: "0.8rem", textTransform: 'uppercase'}}>Status</th>
+                                  <th style={{padding: "10px", color: "var(--text-muted)", fontSize: "0.8rem", textTransform: 'uppercase'}}>Root Cause</th>
+                                  <th style={{padding: "10px", color: "var(--text-muted)", fontSize: "0.8rem", textTransform: 'uppercase'}}>Started</th>
+                                  <th style={{padding: "10px", color: "var(--text-muted)", fontSize: "0.8rem", textTransform: 'uppercase'}}>Duration</th>
                               </tr>
                           </thead>
                           <tbody>
@@ -2024,6 +2506,181 @@ const MonitoringComponent = ({ onBack, token, username }) => {
   );
 };
 
+// ================= LANDING PAGE COMPONENT =================
+const LandingPage = ({ onLogin, onRegister }) => {
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <div className="landing-page">
+      <div className="glow-orb orb-1"></div>
+      <div className="glow-orb orb-2"></div>
+
+      <nav className="landing-nav">
+        <div className="brand">
+          Cyber<span>Guard</span>
+        </div>
+        <div className="nav-actions">
+          <a 
+            href="#contact" 
+            onClick={(e) => { e.preventDefault(); scrollToSection('contact'); }} 
+            className="btn-nav contact"
+          >
+            Contact Us
+          </a>
+          <button onClick={onLogin} className="btn-nav login">
+            Login
+          </button>
+          <button onClick={onRegister} className="btn-nav register">
+            Register
+          </button>
+        </div>
+      </nav>
+
+      <header className="hero-section">
+        <h1 className="hero-title">
+          Next-Generation Domain
+          <br /> Monitoring & Detection
+        </h1>
+        <p className="hero-subtitle">
+          Unify automated domain intelligence with manual asset governance. Secure your infrastructure with  
+              real-time anomaly detection and comprehensive risk reporting.
+        </p>
+        <div className="cta-group">
+            <button 
+                onClick={() => scrollToSection('features')} 
+                className="btn-large btn-secondary-large" 
+                style={{ 
+                    background: 'transparent', 
+                    border: '1px solid var(--status-blue)',
+                    color: 'var(--status-blue)',
+                    padding: '16px 48px',
+                    fontSize: '1.1rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    borderRadius: '2px',
+                    transition: '0.2s'
+                }}
+                onMouseEnter={(e) => {
+                    e.target.style.background = 'rgba(6, 182, 212, 0.1)';
+                    e.target.style.color = 'white';
+                }}
+                onMouseLeave={(e) => {
+                    e.target.style.background = 'transparent';
+                    e.target.style.color = 'var(--status-blue)';
+                }}
+            >
+                Learn More
+            </button>
+        </div>
+      </header>
+
+      <section id="features" className="features-section">
+        <div className="section-header">
+          <h2>System Capabilities</h2>
+          <p>Everything you need to manage your digital presence.</p>
+        </div>
+        <div className="cards-grid">
+          <div className="feature-card">
+            <div className="card-icon">📡</div>
+            <h3>Auto-Tracking</h3>
+            <p>
+              Instant updates on domain status, DNS propagation, and WHOIS changes via RDAP.
+            </p>
+          </div>
+          <div className="feature-card">
+            <div className="card-icon">📝</div>
+            <h3>Manual Asset Mgmt</h3>
+            <p>
+              Define ownership, purpose, and infrastructure details for domains that lack public data.
+            </p>
+          </div>
+          <div className="feature-card">
+            <div className="card-icon">📊</div>
+            <h3>Risk Intelligence</h3>
+            <p>
+              Visual risk scoring based on expiration, compliance checklists, and renewal workflows.
+            </p>
+          </div>
+          
+          <div className="feature-card">
+            <div className="card-icon">⚡</div>
+            <h3>Real-Time Monitoring</h3>
+            <p>
+              Live HTTP/S uptime tracking with adaptive anomaly detection to catch performance bottlenecks.
+            </p>
+          </div>
+          <div className="feature-card">
+            <div className="card-icon">🔒</div>
+            <h3>Secure Reports</h3>
+            <p>
+              Generate password-protected PDF audit trails and executive summaries for compliance.
+            </p>
+          </div>
+          <div className="feature-card">
+            <div className="card-icon">🚨</div>
+            <h3>Incident Response</h3>
+            <p>
+              Detailed incident logging with root cause analysis and automated alerting workflows.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" className="contact-section">
+        <div className="section-header">
+          <h2>Contact Our Developers</h2>
+          <p>Connect with the architects behind your digital defense.</p>
+        </div>
+        <div className="team-grid">
+          <div className="team-card">
+            <div className="avatar">HC</div>
+            <div className="dev-name">Henon Chare</div>
+            <div className="dev-role">Lead Developer</div>
+            <a href="mailto:henonchare21@gmail.com" className="contact-link email-link">📧 henonchare21@gmail.com</a>
+            <a href="tel:+251982049520" className="contact-link phone-link">📞 +251 98 204 9520</a>
+            <a href="https://github.com/henon-chare" target="_blank" rel="noopener noreferrer" className="contact-link github-link">💻 henon-chare</a>
+          </div>
+          <div className="team-card">
+            <div className="avatar">BT</div>
+            <div className="dev-name">Biniyam Temesgen</div>
+            <div className="dev-role">Backend Engineer</div>
+            <a href="mailto:biniyamtemesgen40@gmail.com" className="contact-link email-link">📧 biniyamtemesgen40@gmail.com</a>
+            <a href="tel:+251985957185" className="contact-link phone-link">📞 +251 98 595 7185</a>
+            <a href="https://github.com/Bi-ni-yam" target="_blank" rel="noopener noreferrer" className="contact-link github-link">💻 Bi-ni-yam</a>
+          </div>
+          <div className="team-card">
+            <div className="avatar">MK</div>
+            <div className="dev-name">Mikiyas Kindie</div>
+            <div className="dev-role">Frontend Specialist</div>
+            <a href="mailto:mikiyaskindie6@gmail.com" className="contact-link email-link">📧 mikiyaskindie6@gmail.com</a>
+            <a href="tel:+251948010770" className="contact-link phone-link">📞 +251 94 801 0770</a>
+            <a href="https://github.com/mikii122129" target="_blank" rel="noopener noreferrer" className="contact-link github-link">💻 mikii122129</a>
+          </div>
+          <div className="team-card">
+            <div className="avatar">AM</div>
+            <div className="dev-name">Abinet Melkamu</div>
+            <div className="dev-role">System Architect</div>
+            <a href="mailto:instaman2124@gmail.com" className="contact-link email-link">📧 instaman2124@gmail.com</a>
+            <a href="tel:+251923248825" className="contact-link phone-link">📞 +251 92 324 8825</a>
+            <a href="https://github.com/abinetbdu" target="_blank" rel="noopener noreferrer" className="contact-link github-link">💻 abinetbdu</a>
+          </div>
+        </div>
+      </section>
+
+      <footer className="landing-footer">
+        &copy; 2026 Domain Monitoring and Detecting System. All rights reserved.
+      </footer>
+    </div>
+  );
+};
+
 // ================= MAIN APP COMPONENT =================
 function App() {
   const [showLanding, setShowLanding] = useState(true);
@@ -2141,6 +2798,9 @@ function App() {
     if (selectedCard === "domains") {
       return <DomainTrackingComponent onBack={() => setSelectedCard(null)} token={authToken} username={formData.username} />;
     }
+    if (selectedCard === "alerts") {
+      return <AlertDashboardComponent onBack={() => setSelectedCard(null)} token={authToken} />;
+    }
     return (
       <div className="dashboard">
         <header className="dashboard-header">
@@ -2217,7 +2877,7 @@ function App() {
             <h3>Threat Detection</h3>
             <p>Identify vulnerabilities and suspicious activities.</p>
           </div>
-          <div className="card">
+          <div className="card" onClick={() => setSelectedCard("alerts")}>
             <span className="icon">🚨</span>
             <h3>Alert Dashboard</h3>
             <p>Instant alerts for critical security events.</p>
@@ -2232,7 +2892,12 @@ function App() {
     onRegister={() => { setShowLanding(false); setPage("register"); }} 
   />;
 
-  if (userLoggedIn) return <HomePage />;
+  if (userLoggedIn) return (
+      <>
+        <HomePage />
+        <ToastContainer />
+      </>
+  );
 
   return (
     <div className="app-auth">

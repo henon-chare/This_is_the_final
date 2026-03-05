@@ -44,22 +44,24 @@ from reportlab.graphics import renderPDF
 import auth
 from database import Base, engine, get_db
 from fastapi.middleware.cors import CORSMiddleware
+from models import AlertHistory, AlertRule, Domain, LoginAttempt, Monitor, User
 from monitor import SmartDetector, MonitorState, monitoring_loop
 from urllib.parse import urlparse
 
 # Import Models
-from models import User, LoginAttempt, Domain, Monitor, Incident, AlertRule, AlertHistory
+# ... inside main.py ...
 
 # Import Schemas for Alerts
 try:
-    from alerts import AlertRuleCreate, AlertRuleResponse, AlertHistoryResponse
+    from alert import AlertRuleCreate, AlertRuleResponse, AlertHistoryResponse
 except ImportError:
     class AlertRuleCreate(BaseModel):
         name: str
         type: str
-        target_id: int = None
+        target_id: Optional[int] = None 
+        target_url: Optional[str] = None # ADDED: To accept URL strings for services
         condition: str
-        threshold: str = None
+        threshold: Optional[str] = None
         severity: str = "warning"
         channel: str = "email"
 
@@ -72,6 +74,7 @@ except ImportError:
         class Config:
             from_attributes = True
             
+    # FIX: Added 'severity' field to this class
     class AlertHistoryResponse(BaseModel):
         id: int
         rule_id: Optional[int]
@@ -79,10 +82,13 @@ except ImportError:
         channel: str
         status: str
         recipient: str
+        severity: Optional[str] = "info" # ADDED THIS
         message: Optional[str] = None
         
         class Config:
             from_attributes = True
+
+# ... rest of main.py
 
 from io import BytesIO
 from fastapi.responses import StreamingResponse
@@ -477,11 +483,31 @@ def get_alert_rules(current_user: User = Depends(auth.get_current_user), db: Ses
 
 @app.post("/alerts/rules", response_model=AlertRuleResponse)
 def create_alert_rule(rule: AlertRuleCreate, current_user: User = Depends(auth.get_current_user), db: Session = Depends(get_db)):
+    
+    # --- LOGIC: RESOLVE TARGET ID FOR SERVICES ---
+    resolved_target_id = rule.target_id
+    resolved_target_url = rule.target_url # Store the original string
+    
+    # If it's a service rule and a URL is provided, find the Monitor ID
+    if rule.type == "service" and rule.target_url:
+        # FIX: Strip trailing slash to prevent mismatch (e.g. example.com vs example.com/)
+        clean_target_url = rule.target_url.rstrip('/')
+        
+        monitor = db.query(Monitor).filter(Monitor.target_url == clean_target_url).first()
+        if monitor:
+            resolved_target_id = monitor.id
+            # If we found an exact match, we can clear the target_url or keep it for redundancy.
+            # Keeping it allows the rule to still apply if the monitor URL changes slightly (if we implemented matching).
+            # For now, we keep it.
+        # If monitor not found, we leave it as null (Global) to be safe, 
+        # but we KEEP the target_url in the DB so alert.py can use it for pattern matching.
+
     new_rule = AlertRule(
         user_id=current_user.id,
         name=rule.name,
         type=rule.type,
-        target_id=rule.target_id,
+        target_id=resolved_target_id, # Use the resolved ID
+        target_url=resolved_target_url, # SAVE THIS FOR GLOBAL RULES
         condition=rule.condition,
         threshold=rule.threshold,
         severity=rule.severity,
@@ -590,7 +616,7 @@ def analyze_subdomain(target, status, history):
     else:
         desc = (f"<b>Operational:</b> <font color='#059669'><b>{short_url}</b></font> is healthy. "
                 f"Uptime: <b>{uptime_pct:.1f}%</b>, Avg: <b>{avg_lat:.0f}ms</b>.")
-        status_color = STATUS_GREEN # Fixed: was status_green (undefined)
+        status_color = STATUS_GREEN
         status_label = "OPERATIONAL"
 
     return {
@@ -968,7 +994,6 @@ def generate_single_domain_pdf(domain_id: int, db: Session, password: str):
     doc.build(elements)
     buffer.seek(0)
     return buffer
-    return buffer
 
 @app.post("/domain/report/{id}")
 async def download_single_domain_report(
@@ -989,6 +1014,8 @@ async def download_single_domain_report(
         print(f"[ERROR] Single Domain Report Failed: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
 
 # ================= OLD GLOBAL DOMAIN REPORT =================
 def generate_global_domain_report(user_id: int, db: Session, password: str):

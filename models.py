@@ -85,7 +85,7 @@ class Incident(Base):
     id = Column(Integer, primary_key=True, index=True)
     monitor_id = Column(Integer, ForeignKey("monitors.id"), nullable=False)
     status = Column(String(50), default="Ongoing")
-    error_type = Column(String(100), nullable=True)
+    error_type =Column( String(100), nullable=True)
     started_at = Column(DateTime, default=datetime.utcnow, index=True)
     ended_at = Column(DateTime, nullable=True)
     duration_seconds = Column(Integer, nullable=True)
@@ -102,6 +102,7 @@ class AlertRule(Base):
     name = Column(String(100), nullable=False)
     type = Column(String(50), nullable=False) # 'service' or 'domain'
     target_id = Column(Integer, nullable=True) # ID of monitor or domain
+    target_url = Column(String(500), nullable=True) # ADDED: To store root domain patterns (e.g., example.com)
     condition = Column(String(100), nullable=False) # e.g. 'status_down', 'response_time_high'
     threshold = Column(String(50), nullable=True) # Optional value for threshold
     
