@@ -1,112 +1,131 @@
 # alert.py
 import logging
-import re # Import regex for domain parsing
+import re
 from datetime import datetime, timedelta
 from sqlalchemy import or_
 from database import SessionLocal
-from models import AlertRule, AlertHistory, Monitor
+from models import AlertRule, AlertHistory, Monitor, Domain
 
 logger = logging.getLogger(__name__)
 
-# Helper to extract root domain (e.g., api.google.com -> google.com)
-def get_root_domain(url):
+def get_domain_suffixes(url):
+    """
+    Generates a list of domain suffixes to search for potential parent monitors.
+    e.g., 'lms.courses.bdu.edu.et' -> ['lms.courses.bdu.edu.et', 'courses.bdu.edu.et', 'bdu.edu.et', 'edu.et', 'et']
+    """
     try:
-        # Remove protocol
+        # Remove protocol and path
         domain = url.replace("https://", "").replace("http://", "").split("/")[0]
-        # Split by dot
         parts = domain.split(".")
-        if len(parts) > 2:
-            return ".".join(parts[-2:])
-        return domain
+        suffixes = []
+        for i in range(len(parts)):
+            suffixes.append(".".join(parts[i:]))
+        return suffixes
     except:
-        return url
+        return [url]
 
 def check_service_alerts(target_url, current_status, current_latency):
     """
     Evaluates the current monitoring state against user-defined AlertRules.
-    Supports "Main Domain" grouping: selecting 'google.com' alerts for 'api.google.com'.
+    Uses suffix matching to correctly identify parent monitors for deep subdomains.
     """
     db = SessionLocal()
     try:
-        # 1. Resolve Target URL to Monitor DB Entry
-        monitor = db.query(Monitor).filter(Monitor.target_url == target_url).first()
-        
-        # --- FIX: AGGREGATE RELEVANT MONITOR IDs ---
-        # We need to check rules for: 1. The exact target, 2. The parent domain (if applicable)
         target_monitor_ids = set()
         user_id_to_check = None
-        monitor_id_to_use = None # The ID to use for saving the Alert History
+        monitor_id_to_use = None 
 
+        # 1. EXACT MATCH: Try to find an exact monitor entry first
+        monitor = db.query(Monitor).filter(Monitor.target_url == target_url).first()
         if monitor:
             target_monitor_ids.add(monitor.id)
             user_id_to_check = monitor.user_id
             monitor_id_to_use = monitor.id
 
-        # Regardless of whether 'monitor' exists, try to find the PARENT domain monitor.
-        # This ensures that if I have a rule for 'example.com', it applies to 'ma.example.com'
-        # even if 'ma.example.com' is tracked as a separate monitor in the DB.
-        root_domain = get_root_domain(target_url)
-        if root_domain:
-            parent_monitor = db.query(Monitor).filter(
-                or_(
-                    Monitor.target_url == f"http://{root_domain}",
-                    Monitor.target_url == f"https://{root_domain}"
-                )
-            ).first()
+        # 2. SUFFIX SEARCH (The Fix): If no exact match, try to find a parent monitor
+        # This handles cases like checking 'sub.example.com' when only 'example.com' is monitored
+        if not user_id_to_check:
+            possible_domains = get_domain_suffixes(target_url)
             
-            if parent_monitor:
-                target_monitor_ids.add(parent_monitor.id)
-                # If we didn't find a user_id earlier (e.g. untracked subdomain), use parent's
-                if not user_id_to_check:
+            # Iterate from most specific to least specific (reversed list)
+            # e.g. check 'bdu.edu.et' before 'edu.et'
+            for domain_candidate in reversed(possible_domains):
+                # We skip single part TLDs like 'et' or 'com' unless necessary, 
+                # but for generic logic we check all.
+                
+                parent_monitor = db.query(Monitor).filter(
+                    or_(
+                        Monitor.target_url == f"http://{domain_candidate}",
+                        Monitor.target_url == f"https://{domain_candidate}",
+                        Monitor.target_url == domain_candidate
+                    )
+                ).first()
+
+                if parent_monitor:
+                    target_monitor_ids.add(parent_monitor.id)
                     user_id_to_check = parent_monitor.user_id
-                # If no specific monitor ID was set, default to parent for history tracking
-                if not monitor_id_to_use:
                     monitor_id_to_use = parent_monitor.id
+                    break # Found the best match, stop searching
+
+        # 3. DOMAIN TABLE FALLBACK: If still no user found via Monitors, check Domain Tracking
+        if not user_id_to_check:
+            for domain_candidate in reversed(possible_domains):
+                domain_entry = db.query(Domain).filter(Domain.domain_name == domain_candidate).first()
+                if domain_entry:
+                    user_id_to_check = domain_entry.user_id
+                    # monitor_id_to_use remains None as there is no specific monitor row
+                    break
 
         # If we still can't identify the user, we can't proceed
         if not user_id_to_check:
             return
 
-        # 2. Calculate Root Domain for Grouping Logic (Legacy fallback for Global Rules)
-        current_root_domain = get_root_domain(target_url)
-
-        # 3. Fetch Active Rules
-        # We fetch rules that are:
-        # a) For ANY of the relevant Monitor IDs (Target OR Parent)
-        # b) Global Rules (target_id is None)
+        # 4. FETCH RULES
+        # We fetch all active service rules for the user
         rules = db.query(AlertRule).filter(
             AlertRule.user_id == user_id_to_check,
             AlertRule.type == "service",
-            AlertRule.is_active == True,
-            or_(
-                AlertRule.target_id.in_(target_monitor_ids),
-                AlertRule.target_id == None
-            )
+            AlertRule.is_active == True
         ).all()
 
+        # Helper to get root domain for string matching fallback
+        def get_root_domain(u):
+            try:
+                d = u.replace("https://", "").replace("http://", "").split("/")[0]
+                p = d.split(".")
+                return ".".join(p[-2:]) if len(p) > 2 else d
+            except: return u
+
+        current_root_domain = get_root_domain(target_url)
+
         for rule in rules:
-            # --- LOGIC: SKIP IF GLOBAL RULE DOESN'T MATCH DOMAIN ---
-            # If target_id is None, it's a global rule.
-            # We check if the rule has a saved target_url (new feature) first.
-            if rule.target_id is None:
-                match = False
+            # --- SMART MATCHING LOGIC ---
+            rule_applies = False
+            
+            # Case A: Exact ID match
+            # If the rule points to a specific Monitor ID, and we found that ID in our search
+            if rule.target_id and rule.target_id in target_monitor_ids:
+                rule_applies = True
+            
+            # Case B: Rule has a specific URL string
+            elif rule.target_url:
+                # Normalize
+                clean_rule_url = rule.target_url.replace("https://", "").replace("http://", "").strip().lower().rstrip("/")
+                clean_current_url = target_url.replace("https://", "").replace("http://", "").strip().lower().rstrip("/")
                 
-                # PRIMARY CHECK: Use the new target_url column
-                if rule.target_url:
-                    # Normalize both for comparison (remove http/s)
-                    clean_rule_url = rule.target_url.replace("https://", "").replace("http://", "").rstrip("/")
-                    clean_current_url = target_url.replace("https://", "").replace("http://", "").rstrip("/")
-                    
-                    # Check if current monitored URL ends with the rule target (supports subdomains)
-                    if clean_current_url.endswith(clean_rule_url):
-                        match = True
-                
-                # SECONDARY CHECK (Fallback): Check if root domain is in rule name (Old logic)
-                if not match and current_root_domain in rule.name:
-                    match = True
-                
-                if not match:
-                    continue # Skip this rule, it doesn't apply to this target
+                # Check if current URL ends with the rule URL (supports subdomains)
+                if clean_current_url.endswith("." + clean_rule_url) or clean_current_url == clean_rule_url:
+                    rule_applies = True
+                # Fallback: Root domain check
+                elif get_root_domain(clean_current_url) == get_root_domain(clean_rule_url):
+                    rule_applies = True
+            
+            # Case C: Global Rule
+            elif rule.target_id is None and not rule.target_url:
+                rule_applies = True
+            
+            if not rule_applies:
+                continue
 
             triggered = False
             message = ""
@@ -114,16 +133,16 @@ def check_service_alerts(target_url, current_status, current_latency):
             # --- LOGIC: STATUS DOWN ---
             if rule.condition == "status_down":
                 failure_keywords = ["DOWN", "ERROR", "REFUSED", "TIMEOUT", "NOT FOUND", "CRITICAL"]
+                # We check if the status string CONTAINS any keyword
                 if any(kw in current_status for kw in failure_keywords):
                     triggered = True
-                    # Display the specific subdomain that triggered the alert
                     message = f"CRITICAL: {target_url} reported status '{current_status}'. (Rule: {rule.name})"
 
             # --- LOGIC: HIGH LATENCY ---
             elif rule.condition == "response_time_high":
                 thresh_str = rule.threshold if rule.threshold else ">1000"
                 
-                # --- FIX: Handle numeric only thresholds (e.g. "500" -> ">500") ---
+                # Handle numeric only thresholds
                 if thresh_str.strip().isdigit():
                     thresh_str = ">" + thresh_str
 
@@ -147,20 +166,18 @@ def check_service_alerts(target_url, current_status, current_latency):
 
                 if is_breached:
                     triggered = True
-                    # Display the specific subdomain that triggered the alert
                     message = f"WARNING: {target_url} latency {current_latency:.2f}ms > {limit}ms (Rule: {rule.name})"
 
             # --- DEBOUNCE & SAVE ---
             if triggered:
-                # --- FIX: URL-AWARE DEBOUNCING ---
-                # We check if this SPECIFIC target_url triggered this rule in the last 30 minutes.
-                # This ensures that if 'ma.example.com' and 'mb.example.com' both trigger the 
-                # same parent rule, BOTH alerts are saved, not just the first one.
+                # Check for recent alerts. 
+                # Note: If multiple subdomains share the same parent monitor ID (monitor_id_to_use),
+                # the 'message' check differentiates them (e.g. message contains 'eduvpn' vs 'lms').
                 recent_alert = db.query(AlertHistory).filter(
                     AlertHistory.rule_id == rule.id,
                     AlertHistory.source_id == monitor_id_to_use,
                     AlertHistory.triggered_at > datetime.utcnow() - timedelta(minutes=30),
-                    AlertHistory.message.like(f"%{target_url}%") # Crucial: Check for the specific URL
+                    AlertHistory.message.like(f"%{target_url}%")
                 ).first()
 
                 if not recent_alert:
@@ -178,7 +195,7 @@ def check_service_alerts(target_url, current_status, current_latency):
                     db.commit()
                     logger.info(f"ALERT TRIGGERED: {message}")
                 else:
-                    logger.debug(f"ALERT DEBOUNCED: Rule {rule.id} for {target_url} (Recent alert exists for this specific URL)")
+                    logger.debug(f"ALERT DEBOUNCED: Rule {rule.id} for {target_url}")
 
     except Exception as e:
         logger.error(f"Alert Logic Error: {e}")
